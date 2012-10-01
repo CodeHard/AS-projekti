@@ -1,3 +1,17 @@
+# ignore all..
+/*/
+/*
+
+#..except source and some other stuff
+!/src/
+/src/CMakeFiles
+/src/*~
+!CMakeLists.txt
+!/.gitignore
+!/README
+!/INSTALL
+!/ChangeLog
+
 # Compiled Object files
 *.slo
 *.lo
