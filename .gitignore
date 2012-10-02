@@ -24,3 +24,12 @@
 *.lai
 *.la
 *.a
+
+# Sublime text project files
+*.sublime-*
+
+# Swap files
+*~
+
+# build files
+build
