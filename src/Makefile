@@ -136,60 +136,18 @@ depend:
 	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
-# Convenience name for target.
-src/CMakeFiles/as_project.dir/rule:
-	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/as_project.dir/rule
-.PHONY : src/CMakeFiles/as_project.dir/rule
-
-# Convenience name for target.
-as_project: src/CMakeFiles/as_project.dir/rule
-.PHONY : as_project
-
-# fast build rule for target.
-as_project/fast:
-	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(MAKE) -f src/CMakeFiles/as_project.dir/build.make src/CMakeFiles/as_project.dir/build
-.PHONY : as_project/fast
-
-object_scanner.o: object_scanner.cc.o
-.PHONY : object_scanner.o
-
-# target to build an object file
-object_scanner.cc.o:
-	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(MAKE) -f src/CMakeFiles/as_project.dir/build.make src/CMakeFiles/as_project.dir/object_scanner.cc.o
-.PHONY : object_scanner.cc.o
-
-object_scanner.i: object_scanner.cc.i
-.PHONY : object_scanner.i
-
-# target to preprocess a source file
-object_scanner.cc.i:
-	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(MAKE) -f src/CMakeFiles/as_project.dir/build.make src/CMakeFiles/as_project.dir/object_scanner.cc.i
-.PHONY : object_scanner.cc.i
-
-object_scanner.s: object_scanner.cc.s
-.PHONY : object_scanner.s
-
-# target to generate assembly for a file
-object_scanner.cc.s:
-	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(MAKE) -f src/CMakeFiles/as_project.dir/build.make src/CMakeFiles/as_project.dir/object_scanner.cc.s
-.PHONY : object_scanner.cc.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
-	@echo "... as_project"
 	@echo "... edit_cache"
 	@echo "... install"
 	@echo "... install/local"
 	@echo "... install/strip"
 	@echo "... list_install_components"
 	@echo "... rebuild_cache"
-	@echo "... object_scanner.o"
-	@echo "... object_scanner.i"
-	@echo "... object_scanner.s"
 .PHONY : help
 
 

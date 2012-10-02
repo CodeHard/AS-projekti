@@ -55,7 +55,8 @@ LINK_DIRECTORIES(${PCL_LIBRARY_DIRS})
 # Add Build Targets
 #
 ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(test)
+ADD_SUBDIRECTORY(src/scanner)
+ADD_SUBDIRECTORY(src/recognizer)
 
 #
 # Add Install Targets
