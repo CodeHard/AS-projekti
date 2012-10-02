@@ -36,10 +36,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/tommi/cpp-src/cpp-project-template
+CMAKE_SOURCE_DIR = /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/tommi/cpp-src/cpp-project-template
+CMAKE_BINARY_DIR = /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -107,14 +107,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/tommi/cpp-src/cpp-project-template && $(CMAKE_COMMAND) -E cmake_progress_start /home/tommi/cpp-src/cpp-project-template/CMakeFiles /home/tommi/cpp-src/cpp-project-template/src/CMakeFiles/progress.marks
-	cd /home/tommi/cpp-src/cpp-project-template && $(MAKE) -f CMakeFiles/Makefile2 src/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/tommi/cpp-src/cpp-project-template/CMakeFiles 0
+	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(CMAKE_COMMAND) -E cmake_progress_start /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template/CMakeFiles /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template/src/CMakeFiles/progress.marks
+	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(MAKE) -f CMakeFiles/Makefile2 src/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/tommi/cpp-src/cpp-project-template && $(MAKE) -f CMakeFiles/Makefile2 src/clean
+	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(MAKE) -f CMakeFiles/Makefile2 src/clean
 .PHONY : clean
 
 # The main clean target
@@ -123,22 +123,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/tommi/cpp-src/cpp-project-template && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
+	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/tommi/cpp-src/cpp-project-template && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
+	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/tommi/cpp-src/cpp-project-template && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/CMakeFiles/as_project.dir/rule:
-	cd /home/tommi/cpp-src/cpp-project-template && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/as_project.dir/rule
+	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/as_project.dir/rule
 .PHONY : src/CMakeFiles/as_project.dir/rule
 
 # Convenience name for target.
@@ -147,32 +147,32 @@ as_project: src/CMakeFiles/as_project.dir/rule
 
 # fast build rule for target.
 as_project/fast:
-	cd /home/tommi/cpp-src/cpp-project-template && $(MAKE) -f src/CMakeFiles/as_project.dir/build.make src/CMakeFiles/as_project.dir/build
+	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(MAKE) -f src/CMakeFiles/as_project.dir/build.make src/CMakeFiles/as_project.dir/build
 .PHONY : as_project/fast
 
-main.o: main.cc.o
-.PHONY : main.o
+object_scanner.o: object_scanner.cc.o
+.PHONY : object_scanner.o
 
 # target to build an object file
-main.cc.o:
-	cd /home/tommi/cpp-src/cpp-project-template && $(MAKE) -f src/CMakeFiles/as_project.dir/build.make src/CMakeFiles/as_project.dir/main.cc.o
-.PHONY : main.cc.o
+object_scanner.cc.o:
+	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(MAKE) -f src/CMakeFiles/as_project.dir/build.make src/CMakeFiles/as_project.dir/object_scanner.cc.o
+.PHONY : object_scanner.cc.o
 
-main.i: main.cc.i
-.PHONY : main.i
+object_scanner.i: object_scanner.cc.i
+.PHONY : object_scanner.i
 
 # target to preprocess a source file
-main.cc.i:
-	cd /home/tommi/cpp-src/cpp-project-template && $(MAKE) -f src/CMakeFiles/as_project.dir/build.make src/CMakeFiles/as_project.dir/main.cc.i
-.PHONY : main.cc.i
+object_scanner.cc.i:
+	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(MAKE) -f src/CMakeFiles/as_project.dir/build.make src/CMakeFiles/as_project.dir/object_scanner.cc.i
+.PHONY : object_scanner.cc.i
 
-main.s: main.cc.s
-.PHONY : main.s
+object_scanner.s: object_scanner.cc.s
+.PHONY : object_scanner.s
 
 # target to generate assembly for a file
-main.cc.s:
-	cd /home/tommi/cpp-src/cpp-project-template && $(MAKE) -f src/CMakeFiles/as_project.dir/build.make src/CMakeFiles/as_project.dir/main.cc.s
-.PHONY : main.cc.s
+object_scanner.cc.s:
+	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(MAKE) -f src/CMakeFiles/as_project.dir/build.make src/CMakeFiles/as_project.dir/object_scanner.cc.s
+.PHONY : object_scanner.cc.s
 
 # Help Target
 help:
@@ -187,9 +187,9 @@ help:
 	@echo "... install/strip"
 	@echo "... list_install_components"
 	@echo "... rebuild_cache"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
+	@echo "... object_scanner.o"
+	@echo "... object_scanner.i"
+	@echo "... object_scanner.s"
 .PHONY : help
 
 
@@ -201,6 +201,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/tommi/cpp-src/cpp-project-template && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

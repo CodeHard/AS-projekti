@@ -1,4 +1,4 @@
-# Install script for directory: /home/tommi/cpp-src/cpp-project-template/src
+# Install script for directory: /home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template/src
 
 # Set the install prefix
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,8 +45,8 @@ IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspeci
     ENDIF()
   ENDFOREACH()
   FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE EXECUTABLE FILES
-    "/home/tommi/cpp-src/cpp-project-template/bin/as_project-0.1"
-    "/home/tommi/cpp-src/cpp-project-template/bin/as_project"
+    "/home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template/bin/as_project-0.1"
+    "/home/tommi/koulu/as-project/cpp-workspace/as_project@cpp-project-template/bin/as_project"
     )
   FOREACH(file
       "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/as_project-0.1"
