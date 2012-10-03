@@ -5,10 +5,15 @@
  *      Author: tommi
  */
 
-#ifndef SEGMENTOR_H_
-#define SEGMENTOR_H_
+#ifndef CODEHARD_SEGMENTOR_H_
+#define CODEHARD_SEGMENTOR_H_
 
+#include <pcl/segmentation/sac_segmentation.h>
 
-
+class Segmentor {
+private:
+public:
+	Segmentor() {}
+};
 
 #endif /* SEGMENTOR_H_ */

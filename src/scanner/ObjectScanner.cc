@@ -5,40 +5,59 @@
 #include "../Calibrator.h"
 #include "../Segmentor.h"
 #include "../FileHandler.h"
+#include "../ScannerGUI.h"
 
-class SimpleOpenNIViewer {
+typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudType;
+
+
+// TODO: a common superclass for ObjectScanner and ObjectRecognizer. They have a lot incommon:
+// recognizer needs almost all of scanner's member variables and some functions
+
+class ObjectScanner {
+private:
+	FileHandler fileHandler;
+	Segmentor segmentor;
+	Calibrator calibrator;
+	ScannerGUI gui;
+	CameraWrapper cameraWrapper;
+	PointCloudType objectCloud;
 public:
-	SimpleOpenNIViewer() :
-			viewer("PCL OpenNI Viewer") {
-	}
+	ObjectScanner() :
+		fileHandler("../../ObjectModels/"),
+		gui(),
+		cameraWrapper(gui)
+	{
 
-	void cloud_cb_(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud) {
-		if (!viewer.wasStopped())
-			viewer.showCloud(cloud);
+	}
+	ScannerGUI& getGUI() {
+		return gui;
+	}
+	FileHandler& getFileHandler() {
+		return fileHandler;
+	}
+	void init() {
+		cameraWrapper.startCapturing();
 	}
 
 	void run() {
-		pcl::Grabber* interface = new pcl::OpenNIGrabber();
-
-		boost::function<void(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr&)> f =
-				boost::bind(&SimpleOpenNIViewer::cloud_cb_, this, _1);
-
-		interface->registerCallback(f);
-
-		interface->start();
-
-		while (!viewer.wasStopped()) {
-			boost::this_thread::sleep(boost::posix_time::seconds(1));
+		while(gui.running()) {
+			// main loop is empty, as CameraWrapper callback calls directly ScannerGUI::update()
+			boost::this_thread::sleep(boost::posix_time::milliseconds (5));
 		}
 
-		interface->stop();
+		// in the end, save the cloud to a file
+		// TODO: save anytime with a keyboard command
+		//const PointCloudType constCloud = const_cast<PointCloudType>(objectCloud);
+		std::string objectName = "kahvikuppi";
+		// TODO: get cloud data from somewhere to write it
+		//fileHandler.writePointCloudToFile(objectName, objectCloud);
 	}
-
-	pcl::visualization::CloudViewer viewer;
 };
 
+
 int main() {
-	SimpleOpenNIViewer v;
-	v.run();
+	ObjectScanner scanner;
+	scanner.init();
+	scanner.run();
 	return 0;
 }
