@@ -4,6 +4,7 @@
 
 #..except source and some other stuff
 !/src/
+!/test/
 /src/CMakeFiles
 /src/*~
 !CMakeLists.txt

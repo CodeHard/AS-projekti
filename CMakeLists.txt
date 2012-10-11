@@ -58,6 +58,7 @@ ADD_DEFINITIONS(${PCL_DEFINITIONS})
 #ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(src/scanner)
 ADD_SUBDIRECTORY(src/recognizer)
+ADD_SUBDIRECTORY(test)
 
 #
 # Add Install Targets
