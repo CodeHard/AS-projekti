@@ -2,8 +2,8 @@
 #include <pcl/visualization/cloud_viewer.h>
 
 #include "../CameraWrapper.h"
-#include "../Calibrator.h"
-#include "../Segmentor.h"
+#include "../Calibrate.h"
+#include "../Segment.h"
 #include "../FileHandler.h"
 #include "../ScannerGUI.h"
 
@@ -18,8 +18,6 @@ namespace askinect {
 	class ObjectScanner {
 	private:
 		FileHandler fileHandler;
-		Segmentor segmentor;
-		Calibrator calibrator;
 		ScannerGUI gui;
 		CameraWrapper cameraWrapper;
 		PointCloudType objectCloud;
