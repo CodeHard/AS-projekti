@@ -1,19 +1,13 @@
-/*
- * Segmentor.h
- *
- *  Created on: Oct 2, 2012
- *      Author: tommi
- */
-
-#ifndef CODEHARD_SEGMENTOR_H_
-#define CODEHARD_SEGMENTOR_H_
+#pragma once
 
 #include <pcl/segmentation/sac_segmentation.h>
 
-class Segmentor {
-private:
-public:
-	Segmentor() {}
-};
+namespace askinect {
+  
+  class Segmentor {
+  private:
+  public:
+  	Segmentor() {}
+  };
 
-#endif /* SEGMENTOR_H_ */
+}
