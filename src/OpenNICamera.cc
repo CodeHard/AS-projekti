@@ -2,7 +2,7 @@
 
 namespace askinect {
 
-	OpenNICamera::OpenNICamera() {
+	void OpenNICamera::start() {
 		interface.start();
 	}
 

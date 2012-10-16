@@ -13,11 +13,11 @@ namespace askinect {
 
       ~RecognizeResults() {}
 
-      void AddResults(std::string id, int count) {
+      void addResults(std::string id, int count) {
         counts[id] = count;
       }
 
-      int GetResults(std::string id) {
+      int getResults(std::string id) {
         return counts[id];
       }
   };

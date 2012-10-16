@@ -5,7 +5,7 @@
 namespace askinect {
 
   template<typename T>
-  RecognizeResults Recognize(const CloudDB<T> &models, const pcl::PointCloud<T> &test_cloud) {
+  RecognizeResults recognize(const CloudDB<T> &models, const pcl::PointCloud<T> &test_cloud) {
     RecognizeResults results;
     return results;
   }

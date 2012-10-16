@@ -5,6 +5,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include "../src/OpenNICamera.h"
+#include "../src/SimulatorCamera.h"
 #include "../src/Calibrate.h"
 #include "../src/Register.h"
 #include "../src/Filter.h"
@@ -16,43 +17,49 @@
 
 void testCalibrate() {
   pcl::PointCloud<pcl::PointXYZRGB> cloud;
-  auto calibrated_cloud = askinect::Calibrate(cloud);
+  auto calibrated_cloud = askinect::calibrate(cloud);
 }
 
 void testRegister() {
   pcl::PointCloud<pcl::PointXYZRGB> cloud;
   askinect::Register<pcl::PointXYZRGB> reg;
-  auto adjusted_cloud = reg.RegisterNew(cloud);
+  auto adjusted_cloud = reg.registerNew(cloud);
 }
 
 void testFilter() {
   pcl::PointCloud<pcl::PointXYZRGB> cloud;
   askinect::Filter<pcl::PointXYZRGB> filter;
-  auto model = filter.UpdateModel(cloud); 
+  auto model = filter.updateModel(cloud); 
 }
 
 void testSegment() {
   pcl::PointCloud<pcl::PointXYZRGB> cloud;
-  auto segments = askinect::Segment(cloud);
+  auto segments = askinect::segment(cloud);
 }
 
 void testCloudDB() {
   askinect::CloudDB<pcl::PointXYZRGB> clouds;
   pcl::PointCloud<pcl::PointXYZRGB> cloud;
-  clouds.AddCloud("cloud", cloud);
-  auto get_cloud = clouds.GetCloud("cloud");
+  clouds.addCloud("cloud", cloud);
+  auto get_cloud = clouds.getCloud("cloud");
 }
 
 void testRecognize() {
   askinect::CloudDB<pcl::PointXYZRGB> db;
   pcl::PointCloud<pcl::PointXYZRGB> cloud;
-  auto results = askinect::Recognize(db, cloud);
+  auto results = askinect::recognize(db, cloud);
 }
 
 void testRecognizeResults() {
   askinect::RecognizeResults results;
-  results.AddResults("test", 1);
-  auto get_result = results.GetResults("test");
+  results.addResults("test", 1);
+  auto get_result = results.getResults("test");
+}
+
+void testSimulatorCamera() {
+  askinect::SimulatorCamera<pcl::PointXYZRGB> cam;
+  cam.refreshRate = 100;
+  cam.filename = "testing";
 }
 
 void testOpenNICamera() {
@@ -68,9 +75,10 @@ int main() {
   testCloudDB();
   testRecognize();
   testRecognizeResults();
+  testSimulatorCamera();
 
   // aborts without camera
-  testOpenNICamera();
+  //testOpenNICamera();
 
   return 0;
 }

@@ -11,7 +11,7 @@ namespace askinect {
     pcl::OpenNIGrabber interface;
 
   public:
-    OpenNICamera();
+    OpenNICamera() {}
 
     ~OpenNICamera() {}
 
@@ -20,6 +20,8 @@ namespace askinect {
     {
       return interface.registerCallback(callback);
     }
+
+    void start();
   };
 
 }

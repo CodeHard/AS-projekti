@@ -15,12 +15,12 @@ namespace askinect {
       CloudDB() {}
       ~CloudDB() {}
 
-      void AddCloud(std::string id, const pcl::PointCloud<T> &cloud) {
+      void addCloud(std::string id, const pcl::PointCloud<T> &cloud) {
         auto cloud_model = CloudModel<T>(id, cloud);
         clouds[id] = cloud_model;
       }
 
-      const CloudModel<T> &GetCloud(std::string id) {
+      const CloudModel<T> &getCloud(std::string id) {
         return clouds[id];
       }
   };

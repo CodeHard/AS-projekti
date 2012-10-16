@@ -12,7 +12,7 @@ namespace askinect {
       Filter() {}
       ~Filter() {}
 
-      const pcl::PointCloud<T> &UpdateModel(const pcl::PointCloud<T> &new_cloud) {
+      const pcl::PointCloud<T> &updateModel(const pcl::PointCloud<T> &new_cloud) {
         pcl::PointCloud<T> cld;
         model = cld;
         return model;

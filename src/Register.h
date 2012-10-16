@@ -12,7 +12,7 @@ namespace askinect {
       Register() {}
       ~Register() {}
 
-      const pcl::PointCloud<T> &RegisterNew(const pcl::PointCloud<T> &new_cloud) {
+      const pcl::PointCloud<T> &registerNew(const pcl::PointCloud<T> &new_cloud) {
         pcl::PointCloud<T> cld;
         previous_cloud = cld;
         return previous_cloud;

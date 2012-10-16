@@ -4,7 +4,7 @@
 namespace askinect {
 
   template<typename T>
-  pcl::PointCloud<T> Calibrate(const pcl::PointCloud<T> &cloud) {
+  pcl::PointCloud<T> calibrate(const pcl::PointCloud<T> &cloud) {
     pcl::PointCloud<T> new_cloud;
     return new_cloud;
   }
