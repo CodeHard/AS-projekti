@@ -22,24 +22,53 @@ SOFTWARE.
 
 #pragma once
 #include <pcl/point_cloud.h>
+#include <boost/function.hpp>
+#include <boost/signals2/signal.hpp>
+#include "Filter.h"
+#include "Register.h"
+
+class boost::signals2::connection;
 
 namespace askinect
 {
 
-template<typename T>
-class Filter
+template<typename CameraT, typename PointT>
+class ModelRecorder
 {
 private:
-    pcl::PointCloud<T> model;
-
+    Register<PointT> reg;
+    Filter<PointT> filter;
+    boost::signals2::signal<void (typename std::vector<pcl::PointCloud<PointT> >&)> sig;
 public:
-    Filter() {}
-    ~Filter() {}
+    CameraT camera;
 
-    const pcl::PointCloud<T> &updateModel(const pcl::PointCloud<T> &new_cloud)
+    ModelRecorder()
     {
-        model = new_cloud;
-        return model;
+        boost::function<void (const pcl::PointCloud<PointT>::ConstPtr &)> f =
+            boost::bind (&ModelRecorder::capture_cb_, this, _1);
+        camera.registerCallback(f);
+    }
+
+    ~ModelRecorder() {}
+
+    template<typename T>
+    boost::signals2::connection registerCallback(const boost::function<T> &callback)
+    {
+        return sig.connect(callback);
+    }
+
+    void capture_cb_(typename pcl::PointCloud<PointT>::ConstPtr const &cloud)
+    {
+        auto calibrated = calibrate(*cloud);
+        auto registered = reg.registerNew(calibrated);
+        auto filteredModel = filter.updateModel(registered);
+        auto segmented = segment(filteredModel);
+        sig(segmented);
+    }
+
+    void start()
+    {
+        cam.start();
     }
 };
 
