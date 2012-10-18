@@ -68,7 +68,7 @@ public:
 
     void start()
     {
-        cam.start();
+        camera.start();
     }
 };
 
