@@ -21,36 +21,40 @@ SOFTWARE.
 */
 
 #pragma once
-#include <pcl/point_cloud.h>
-#include <boost/function.hpp>
-#include <boost/signals2/signal.hpp>
-#include <string>
 
-class boost::signals2::connection;
+#include <string>
+#include <vector>
+#include <boost/regex.hpp>
+#include <boost/filesystem.hpp>
 
 namespace askinect
 {
 
-template<typename PointT>
-class SimulatorCamera
+std::vector<std::string> getFiles(std::string directory, boost::regex filter)
 {
-private:
-    boost::signals2::signal<void (typename pcl::PointCloud<PointT>::ConstPtr const &)> sig;
-public:
-    int refreshRate;
-    std::string directory;
+    std::vector< std::string > allMatchingFiles;
 
-    SimulatorCamera() : refreshRate(30), directory("") {}
-
-    ~SimulatorCamera() {}
-
-    template<typename T>
-    boost::signals2::connection registerCallback(const boost::function<T> &callback)
+    if (!boost::filesystem::is_directory(directory))
     {
-        return sig.connect(callback);
+        return allMatchingFiles;
     }
 
-    void start();
-};
+    boost::filesystem::directory_iterator end_itr; // Default ctor yields past-the-end
+    for ( boost::filesystem::directory_iterator i( directory ); i != end_itr; ++i )
+    {
+        // Skip if not a file
+        if ( !boost::filesystem::is_regular_file( i->status() ) ) continue;
+
+        boost::smatch what;
+
+        // Skip if no match
+        if ( !boost::regex_match( i->path().filename().string(), what, filter ) ) continue;
+
+        // File matches, store it
+        allMatchingFiles.push_back( i->path().string() );
+    }
+
+    return allMatchingFiles;
+}
 
 }

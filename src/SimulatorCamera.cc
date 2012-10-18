@@ -20,11 +20,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <iomanip>
+#include <algorithm>
 #include <boost/thread/thread.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
 #include "SimulatorCamera.h"
 #include "FileHandler.h"
+#include "Common.h"
 
 namespace askinect
 {
@@ -32,15 +35,18 @@ namespace askinect
 template<typename PointT>
 void SimulatorCamera<PointT>::start()
 {
-    std::stringstream ss;
-    int i = 0;
-    while (i < 1000)
+    boost::regex filter(".*\\.pcd");
+    auto files = getFiles(directory, filter);
+
+    sort(files.begin(), files.end());
+
+    auto file = files.begin();
+    while (file != files.end())
     {
-        ss << filename << std::setfill('0') << std::setw(6) << i << ".pcd";
         pcl::PointCloud<PointT> cloud;
-        FileHandler::loadPointCloudFromFile(ss.str(), cloud);
+        FileHandler::loadPointCloudFromFile(*file, cloud);
         sig(&cloud);
-        i++;
+        file++;
 
         boost::this_thread::sleep(boost::posix_time::milliseconds(1000 / refreshRate));
     }

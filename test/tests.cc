@@ -92,7 +92,7 @@ void testSimulatorCamera()
 {
     askinect::SimulatorCamera<pcl::PointXYZRGB> cam;
     cam.refreshRate = 100;
-    cam.filename = "testing";
+    cam.directory = "testing";
 }
 
 void testOpenNICamera()
@@ -104,7 +104,7 @@ void testModelRecorder()
 {
     askinect::ModelRecorder<askinect::SimulatorCamera<pcl::PointXYZRGB>, pcl::PointXYZRGB> rec;
     rec.camera.refreshRate = 100;
-    rec.camera.filename = "testing";
+    rec.camera.directory = "testing";
 }
 
 void runTest(void test(void), std::string name)
