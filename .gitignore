@@ -5,8 +5,9 @@
 #..except source and some other stuff
 !/src/
 !/test/
-/src/CMakeFiles
-/src/*~
+*/CMakeFiles
+*/cmake_install.cmake
+*/*~
 !CMakeLists.txt
 !/.gitignore
 !/README

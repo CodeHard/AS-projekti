@@ -48,14 +48,14 @@ public:
             boost::shared_ptr<const pcl::PointCloud<T> > newCloudPtr(&newCloud);
             boost::shared_ptr<const pcl::PointCloud<T> > previousCloudPtr(&previousCloud);
 
-            pcl::PointCloud<T>::Ptr filtered_cloud (new pcl::PointCloud<T>);
-            pcl::ApproximateVoxelGrid<T> approximate_voxel_filter;
+            typename pcl::PointCloud<T>::Ptr filtered_cloud (new pcl::PointCloud<T>);
+            typename pcl::ApproximateVoxelGrid<T> approximate_voxel_filter;
             approximate_voxel_filter.setLeafSize (0.2, 0.2, 0.2);
 
             approximate_voxel_filter.setInputCloud (newCloudPtr);
             approximate_voxel_filter.filter (*filtered_cloud);
 
-            pcl::NormalDistributionsTransform<T, T> ndt;
+            typename pcl::NormalDistributionsTransform<T, T> ndt;
             // Setting scale dependent NDT parameters
             // Setting minimum transformation difference for termination condition.
             ndt.setTransformationEpsilon (0.01);
@@ -71,7 +71,7 @@ public:
             ndt.setInputTarget (previousCloudPtr);
 
             // Calculating required rigid transform to align the input cloud to the target cloud.
-            pcl::PointCloud<T>::Ptr output_cloud (new pcl::PointCloud<T>);
+            typename pcl::PointCloud<T>::Ptr output_cloud (new pcl::PointCloud<T>);
             ndt.align (*output_cloud, Eigen::Matrix4f::Identity());
 
             std::cout << "Normal Distributions Transform has converged:" << ndt.hasConverged ()

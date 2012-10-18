@@ -44,7 +44,7 @@ public:
 
     ModelRecorder()
     {
-        boost::function<void (const pcl::PointCloud<PointT>::ConstPtr &)> f =
+        boost::function<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> f =
             boost::bind (&ModelRecorder::capture_cb_, this, _1);
         camera.registerCallback(f);
     }
@@ -68,7 +68,7 @@ public:
 
     void start()
     {
-        cam.start();
+        camera.start();
     }
 };
 
