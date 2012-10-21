@@ -25,7 +25,6 @@ SOFTWARE.
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
-#include <boost/make_shared.hpp>
 #include "SimulatorCamera.h"
 #include "FileHandler.h"
 #include "Common.h"
@@ -46,7 +45,7 @@ void SimulatorCamera<PointT>::start()
     {
         pcl::PointCloud<PointT> cloud;
         FileHandler::loadPointCloudFromFile(*file, cloud);
-        sig(boost::make_shared(cloud));
+        sig(&cloud);
         file++;
 
         boost::this_thread::sleep(boost::posix_time::milliseconds(1000 / refreshRate));
