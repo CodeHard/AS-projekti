@@ -66,7 +66,7 @@ public:
             // Setting max number of registration iterations.
             ndt.setMaximumIterations (35);
             // Setting point cloud to be aligned.
-            ndt.setInputCloud (filtered_cloud);
+            ndt.setInputSource (filtered_cloud);
             // Setting point cloud to be aligned to.
             ndt.setInputTarget (previousCloudPtr);
 
