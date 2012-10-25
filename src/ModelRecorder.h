@@ -26,6 +26,8 @@ SOFTWARE.
 #include <boost/signals2/signal.hpp>
 #include "Filter.h"
 #include "Register.h"
+#include "OpenNICamera.h"
+#include "SimulatorCamera.h"
 
 class boost::signals2::connection;
 
@@ -38,7 +40,9 @@ class ModelRecorder
 private:
     Register<PointT> reg;
     Filter<PointT> filter;
-    boost::signals2::signal<void (typename std::vector<pcl::PointCloud<PointT> >&)> sig;
+    boost::signals2::signal<void (typename std::vector<pcl::PointCloud<PointT> >&)> multiCloudSignal;
+    boost::signals2::signal<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> singleCloudSignal;
+
 public:
     CameraT camera;
 
@@ -52,18 +56,25 @@ public:
     ~ModelRecorder() {}
 
     template<typename T>
-    boost::signals2::connection registerCallback(const boost::function<T> &callback)
+    boost::signals2::connection registerMultiCloudCallback(const boost::function<T> &callback)
     {
-        return sig.connect(callback);
+        return multiCloudSignal.connect(callback);
     }
+
+    template<typename T>
+	boost::signals2::connection registerSingleCloudCallback(const boost::function<T> &callback) {
+		return singleCloudSignal.connect(callback);
+	}
+
 
     void capture_cb_(typename pcl::PointCloud<PointT>::ConstPtr const &cloud)
     {
-        auto calibrated = calibrate(*cloud);
+    	singleCloudSignal(cloud);
+        /*auto calibrated = calibrate(*cloud);
         auto registered = reg.registerNew(calibrated);
         auto filteredModel = filter.updateModel(registered);
         auto segmented = segment(filteredModel);
-        sig(segmented);
+        multiCloudSignal(segmented);*/
     }
 
     void start()

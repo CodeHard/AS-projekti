@@ -20,37 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <algorithm>
-#include <boost/thread/thread.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/regex.hpp>
-#include <boost/make_shared.hpp>
 #include "SimulatorCamera.h"
-#include "FileHandler.h"
-#include "Common.h"
+
 
 namespace askinect
 {
 
-template<typename PointT>
-void SimulatorCamera<PointT>::start()
-{
-    boost::regex filter(".*\\.pcd");
-    auto files = getFiles(directory, filter);
 
-    sort(files.begin(), files.end());
-
-    auto file = files.begin();
-    while (file != files.end())
-    {
-        pcl::PointCloud<PointT> cloud;
-        FileHandler::loadPointCloudFromFile(*file, cloud);
-        sig(boost::make_shared(cloud));
-        file++;
-
-        boost::this_thread::sleep(boost::posix_time::milliseconds(1000 / refreshRate));
-    }
-}
 
 }

@@ -24,25 +24,40 @@ SOFTWARE.
 
 #include <pcl/visualization/cloud_viewer.h>
 
+class ObjectScanner;
+
 namespace askinect
 {
 
+//template <typename CameraT, typename PointT>
 class ScannerGUI
 {
 private:
     pcl::visualization::CloudViewer viewer;
+    //ObjectScanner<CameraT, PointT>& scanner;
 public:
-    void keyboardCallback(const pcl::visualization::KeyboardEvent &event, void *none)
+    void keyboardCallback(const pcl::visualization::KeyboardEvent &event, void* none)
     {
         if (event.getKeySym() == "space" && event.keyDown())
         {
             std::cout << "space pressed!" << std::endl;
+            //scanner.doSomething();
         }
+        if (event.getKeyCode() == 39 && event.keyDown())	// choose next pointcloud by right arrow
+        {
+            std::cout << "moving to next pointcloud" << std::endl;
+        }
+		if (event.getKeyCode() == 40 && event.keyDown())	// choose previous pointcloud by left arrow
+		{
+			std::cout << "moving to previous pointcloud" << std::endl;
+		}
     }
 
     ScannerGUI() : viewer("openni viewer")
     {
         // TODO: fix this, but how?
+       // boost::function<void (const pcl::visualization::KeyboardEvent &)> f =
+        //    boost::bind (&ScannerGUI::keyboardCallback, this, _1);
         //viewer.registerKeyboardCallback(keyboardCallback);
     }
 
@@ -56,7 +71,7 @@ public:
         return !viewer.wasStopped();
     }
     /*  \brief Visualizes point cloud and possibly handles keyboard input (?)
-     *
+     *	TODO: update to template
      */
     void update(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr &cloud)
     {

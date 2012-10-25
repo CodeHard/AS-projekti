@@ -25,9 +25,5 @@ SOFTWARE.
 namespace askinect
 {
 
-void OpenNICamera::start()
-{
-    interface.start();
-}
 
 }

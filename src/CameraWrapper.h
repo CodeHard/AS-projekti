@@ -23,33 +23,50 @@ SOFTWARE.
 #pragma once
 
 #include <pcl/io/openni_grabber.h>
+#include <boost/function.hpp>
+#include <boost/regex.hpp>
+#include <boost/make_shared.hpp>
+#include <pcl/point_cloud.h>
+#include <boost/function.hpp>
+#include <boost/signals2/signal.hpp>
 #include "ScannerGUI.h"
+
+class boost::signals2::connection;
+
 
 namespace askinect
 {
 
+template<class PointT>
 class CameraWrapper
 {
 private:
     pcl::Grabber *interface;
-    ScannerGUI &gui;
-    //pcl::PointCloud<pcl::PointXYZRGB> data;
-    //pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr & data;
+    pcl::PointCloud<PointT> data;
+
+    //pcl::PointCloud<PointT>::ConstPtr & data;
 public:
-    CameraWrapper(ScannerGUI &gui) : gui(gui)
+
+    boost::signals2::signal<void (typename pcl::PointCloud<PointT>::ConstPtr const &)> dataSignal;
+
+    CameraWrapper()
     {
         interface = new pcl::OpenNIGrabber();
-
-        // make callback function from member function
-        boost::function<void (const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr &)> f =
-            boost::bind (&CameraWrapper::capture_cb_, this, _1);
-
+        // make callback function that is called as a new frame is available
+        boost::function<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> f = boost::bind (&CameraWrapper::capture_cb_, this, _1);
         interface->registerCallback(f);
     }
     ~CameraWrapper()
     {
 
     }
+
+    template<typename A>
+    boost::signals2::connection routeDepthDataTo(const boost::function<A>& callbackFunction)
+    {
+    	return dataSignal.connect(callbackFunction);
+    }
+
     void startCapturing()
     {
         interface->start();
@@ -58,18 +75,21 @@ public:
     {
         interface->stop();
     }
-
-
-    void capture_cb_ (const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr &cloud)
+/*
+    template<typename T>
+    boost::signals2::connection registerCallback(const boost::function<T> &callback)
     {
-        gui.update(cloud);
-        //data = pcl::PointCloud<pcl::PointXYZRGBA>(cloud);
+        return dataSignal.connect(callback);
     }
-    /*
-    const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr & getPointCloud() {
-        return data;
+*/
+
+    void capture_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr &cloud)
+    {
+    	dataSignal();
+    	//data = pcl::PointCloud<PointT>(cloud);
+        //dataSignal(boost::make_shared(data));
     }
-    */
+
 };
 
 }

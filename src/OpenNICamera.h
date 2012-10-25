@@ -45,7 +45,16 @@ public:
         return interface.registerCallback(callback);
     }
 
-    void start();
+    void start()
+    {
+        interface.start();
+    }
+
+    void stop()
+    {
+        interface.stop();
+    }
+
 };
 
 }

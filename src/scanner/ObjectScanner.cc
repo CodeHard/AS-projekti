@@ -23,13 +23,16 @@ SOFTWARE.
 #include <pcl/io/openni_grabber.h>
 #include <pcl/visualization/cloud_viewer.h>
 
-#include "../CameraWrapper.h"
 #include "../Calibrate.h"
 #include "../Segment.h"
 #include "../FileHandler.h"
 #include "../ScannerGUI.h"
+#include "../ModelRecorder.h"
+#include "../OpenNICamera.h"
 
-typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudType;
+typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudType;
+typedef pcl::PointXYZRGBA PointType;
+typedef askinect::OpenNICamera CameraType;
 
 
 // TODO: a common superclass for ObjectScanner and ObjectRecognizer. They have a lot incommon:
@@ -38,20 +41,25 @@ typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudType;
 namespace askinect
 {
 
+template <typename CameraT, typename PointT>
 class ObjectScanner
 {
 private:
     FileHandler fileHandler;
     ScannerGUI gui;
-    CameraWrapper cameraWrapper;
+    ModelRecorder<CameraT, PointT> modelRecorder;
     PointCloudType objectCloud;
+    unsigned int frameCounter;
 public:
-    ObjectScanner() :
-        fileHandler("../../ObjectModels/"),
+    ObjectScanner(std::string outputFolder) :
+        fileHandler(outputFolder),
         gui(),
-        cameraWrapper(gui)
+        modelRecorder(),
+        frameCounter(0)
     {
-
+    	boost::function<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> f =
+    	            boost::bind (&ObjectScanner::visualizeSingleCloud_cb_, this, _1);
+    	modelRecorder.registerSingleCloudCallback(f);
     }
     ScannerGUI &getGUI()
     {
@@ -63,14 +71,35 @@ public:
     }
     void init()
     {
-        cameraWrapper.startCapturing();
+        modelRecorder.start();
+    }
+    //NOTE: this version of newdata callback is meant for recording data for SimulatorCamera, not actual object scanning
+    void record_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
+    	// show single cloud
+    	gui.update(cloud);
+    	std::stringstream file_name;
+		file_name << "frame";
+		file_name.fill('0');
+		file_name.width(4);
+		file_name << frameCounter++ << ".pcd";
+		std::cout << file_name.str() << std::endl;
+		fileHandler.writePointCloudToFile(file_name.str(), cloud);
     }
 
+    void visualizeSingleCloud_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
+    	// show single cloud
+    	gui.update(cloud);
+    }
+
+
+    /* \brief This function is possibly not needed
+     *
+     */
     void run()
     {
         while (gui.running())
         {
-            // main loop is empty, as CameraWrapper callback calls directly ScannerGUI::update()
+            // main loop is empty, as cloud data is routed directly to ScannerGUI::update(), by boost signals
             boost::this_thread::sleep(boost::posix_time::milliseconds (5));
         }
 
@@ -86,9 +115,16 @@ public:
 }
 
 
-int main()
+int main(int argc, char* argv[])
 {
-    askinect::ObjectScanner scanner;
+	std::cout << "argc = " << argc << ", argv = " << *argv << endl;
+	std::string outputFolder = "/home/tommi/Desktop/AS-projekti/ObjectModels/";
+	if(argc > 1)
+		outputFolder = argv[1];
+
+	std::cout << "Output folder: " << outputFolder << std::endl;
+
+    askinect::ObjectScanner<CameraType, PointType> scanner(outputFolder);
     scanner.init();
     scanner.run();
     return 0;

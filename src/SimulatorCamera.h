@@ -49,8 +49,6 @@ public:
     {
         return sig.connect(callback);
     }
-
-    void start();
 };
 
 }
