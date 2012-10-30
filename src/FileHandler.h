@@ -43,7 +43,7 @@ public:
     /*  Should this take a pointcloud or sensor_msgs::PointCloud2??
      *
      */
-    bool writePointCloudToFile(std::string &filename, pcl::PointCloud<pcl::PointXYZRGB> &cloud)
+    bool writePointCloudToFile(const std::string &filename, pcl::PointCloud<pcl::PointXYZRGB> &cloud)
     {
 
         // copy before writing, in case that reference contents change during the write
@@ -55,7 +55,7 @@ public:
     bool loadPointCloudFromFile(
         const std::string &filename, pcl::PointCloud<pcl::PointXYZRGB> &cloud)
     {
-        if (reader.read(filename, cloud) == -1)
+        if (pcl::io::loadPCDFile<pcl::PointXYZRGB> (targetDirectory + filename, cloud) == -1)
         {
             PCL_ERROR("Couldn't load file.\n");
             return false;

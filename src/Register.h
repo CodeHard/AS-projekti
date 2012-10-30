@@ -25,6 +25,7 @@ SOFTWARE.
 #include <pcl/point_cloud.h>
 #include <pcl/registration/ndt.h>
 #include <pcl/filters/approximate_voxel_grid.h>
+#include <pcl/filters/filter.h>
 
 namespace askinect
 {
@@ -45,8 +46,15 @@ public:
 
         if (isInitialized)
         {
-            boost::shared_ptr<const pcl::PointCloud<T> > newCloudPtr(&newCloud);
-            boost::shared_ptr<const pcl::PointCloud<T> > previousCloudPtr(&previousCloud);
+            pcl::PointCloud<T> nansRemoved;
+            std::vector<int> indices;
+
+            pcl::removeNaNFromPointCloud(newCloud, nansRemoved, indices);
+
+            boost::shared_ptr<const pcl::PointCloud<T> > newCloudPtr(&nansRemoved);
+
+            pcl::PointCloud<T> copy = previousCloud;
+            boost::shared_ptr<const pcl::PointCloud<T> > previousCloudPtr(&copy);
 
             typename pcl::PointCloud<T>::Ptr filtered_cloud (new pcl::PointCloud<T>);
             typename pcl::ApproximateVoxelGrid<T> approximate_voxel_filter;
@@ -78,17 +86,20 @@ public:
                       << " score: " << ndt.getFitnessScore () << std::endl;
 
             // Transforming unfiltered, input cloud using found transform.
-            pcl::transformPointCloud (newCloud, *output_cloud, ndt.getFinalTransformation ());
+            pcl::transformPointCloud (nansRemoved, *output_cloud, ndt.getFinalTransformation ());
+
+            std::cout << "Cloud transformed. Setting previous cloud to result cloud..." << std::endl;
 
             previousCloud = *output_cloud;
+
+            std::cout << "Output cloud saved." << std::endl;
 
         }
         else
         {
-
-            previousCloud = newCloud;
+            std::vector<int> indices;
+            pcl::removeNaNFromPointCloud(newCloud, previousCloud, indices);
             isInitialized = true;
-
         }
 
         return previousCloud;
