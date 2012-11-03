@@ -63,7 +63,9 @@ void testFilter()
 void testSegment()
 {
     pcl::PointCloud<pcl::PointXYZRGB> cloud;
-    auto segments = askinect::segment(cloud);
+    //const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloudPtr = &cloud;
+    //askinect::Segment<pcl::PointXYZRGB> seg;
+    //auto segments = seg.segment(cloudPtr);
 }
 
 void testCloudDB()

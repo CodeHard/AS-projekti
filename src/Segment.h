@@ -23,16 +23,68 @@ SOFTWARE.
 #pragma once
 #include <pcl/point_cloud.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/extract_indices.h>
 #include <vector>
 
 namespace askinect
 {
 
 template<typename T>
-std::vector<pcl::PointCloud<T> > segment(const pcl::PointCloud<T> &cloud)
+class Segment
 {
-    std::vector<pcl::PointCloud<T> > segments;
-    return segments;
-}
+private:
+    typename pcl::PointCloud<T> cloudCopy;
+    typename pcl::PointCloud<T>::CloudVectorType segments;
+	pcl::SACSegmentation<T> seg;
+	pcl::ModelCoefficients::Ptr coefficients;
+	pcl::PointIndices::Ptr inliers;
+public:
+    Segment() : coefficients (new pcl::ModelCoefficients), inliers (new pcl::PointIndices)
+    {
+		// Optional
+		seg.setOptimizeCoefficients (true);
+		// Mandatory
+		seg.setModelType (pcl::SACMODEL_PLANE);
+		seg.setMethodType (pcl::SAC_RANSAC);
+		seg.setDistanceThreshold (0.03);
+    }
+    ~Segment() {}
+
+
+	typename pcl::PointCloud<T>::CloudVectorType& segment(const typename pcl::PointCloud<T>::ConstPtr &cloud)
+	{
+		pcl::copyPointCloud(*cloud, cloudCopy);
+		//iterate cloud as many times as new segments are found
+		for(int i=0; i<3; i++) {
+			seg.setInputCloud(cloudCopy.makeShared());
+			seg.segment (*inliers, *coefficients);
+			if (inliers->indices.size () == 0)
+			{
+			  std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
+			  break;
+			}
+
+			// Extract the inliers
+			pcl::ExtractIndices<T> extract;
+			extract.setInputCloud (cloudCopy.makeShared());
+			extract.setIndices (inliers);
+
+			// Indices that belong to cloud are added to segment vector
+			extract.setNegative (false);
+			pcl::PointCloud<T> segment;
+			extract.filter (segment);
+			segments.push_back(segment);
+
+			// Indices that did not belong to the found segment are left to cloudCopy and searched for other segments
+			extract.setNegative (true);
+			extract.filter(cloudCopy);
+			//cloud_filtered.swap (cloud_f);
+			//pcl::PointCloud<T> segment(cloudCopy, *inliers);
+		}
+
+
+		return segments;
+	}
+};
 
 }

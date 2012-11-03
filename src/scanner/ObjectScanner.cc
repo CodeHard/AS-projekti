@@ -60,6 +60,10 @@ public:
     	boost::function<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> f =
     	            boost::bind (&ObjectScanner::visualizeSingleCloud_cb_, this, _1);
     	modelRecorder.registerSingleCloudCallback(f);
+
+    	boost::function<void (typename pcl::PointCloud<PointT>::CloudVectorType&)> f2 =
+    	    	            boost::bind (&ObjectScanner::visualizeMultiCloud_cb_, this, _1);
+    	modelRecorder.registerMultiCloudCallback(f2);
     }
     ScannerGUI &getGUI()
     {
@@ -88,7 +92,15 @@ public:
 
     void visualizeSingleCloud_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
     	// show single cloud
-    	gui.update(cloud);
+    	//gui.update(cloud);
+    }
+
+    void visualizeMultiCloud_cb_(typename pcl::PointCloud<PointT>::CloudVectorType& clouds) {
+    	// show single cloud
+
+    	if(!clouds.empty()) {
+    		gui.drawSegments(clouds);
+    	}
     }
 
 

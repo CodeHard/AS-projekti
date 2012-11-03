@@ -56,9 +56,9 @@ public:
     ScannerGUI() : viewer("openni viewer")
     {
         // TODO: fix this, but how?
-       // boost::function<void (const pcl::visualization::KeyboardEvent &)> f =
-        //    boost::bind (&ScannerGUI::keyboardCallback, this, _1);
-        //viewer.registerKeyboardCallback(keyboardCallback);
+    	//boost::function<void (const pcl::visualization::KeyboardEvent &, void*)> f =
+        //boost::bind (&ScannerGUI::keyboardCallback, this, _1);
+    	//viewer.registerKeyboardCallback(f);
     }
 
     ~ScannerGUI()
@@ -79,6 +79,22 @@ public:
         // visualize
         viewer.showCloud(cloud);
     }
+
+    void drawRawData(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr &cloud) {
+        viewer.showCloud(cloud);
+    }
+
+    void drawSegments(typename pcl::PointCloud<pcl::PointXYZRGBA>::CloudVectorType& clouds) {
+
+    	for(unsigned short i=0; i<clouds.size(); i++) {
+    		pcl::PointCloud<pcl::PointXYZ> singleColorCloud;
+    		pcl::PointCloud<pcl::PointXYZRGBA> coloredCloud;
+    		pcl::copyPointCloud(clouds.at(i), singleColorCloud);
+    		pcl::copyPointCloud(singleColorCloud, coloredCloud);
+    		viewer.showCloud(coloredCloud.makeShared());
+    	}
+    }
+
 
 
 

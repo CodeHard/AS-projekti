@@ -26,6 +26,7 @@ SOFTWARE.
 #include <boost/signals2/signal.hpp>
 #include "Filter.h"
 #include "Register.h"
+#include "Segment.h"
 #include "OpenNICamera.h"
 #include "SimulatorCamera.h"
 
@@ -40,7 +41,8 @@ class ModelRecorder
 private:
     Register<PointT> reg;
     Filter<PointT> filter;
-    boost::signals2::signal<void (typename std::vector<pcl::PointCloud<PointT> >&)> multiCloudSignal;
+    Segment<PointT> seg;
+    boost::signals2::signal<void (typename pcl::PointCloud<PointT>::CloudVectorType&)> multiCloudSignal;
     boost::signals2::signal<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> singleCloudSignal;
 
 public:
@@ -67,14 +69,20 @@ public:
 	}
 
 
-    void capture_cb_(typename pcl::PointCloud<PointT>::ConstPtr const &cloud)
+    void capture_cb_(const typename pcl::PointCloud<PointT>::ConstPtr &cloud)
     {
+    	pcl::PointCloud<PointT> cloudCopy;
+    	pcl::copyPointCloud(*cloud, cloudCopy);
+
     	singleCloudSignal(cloud);
+
         /*auto calibrated = calibrate(*cloud);
         auto registered = reg.registerNew(calibrated);
         auto filteredModel = filter.updateModel(registered);
         auto segmented = segment(filteredModel);
         multiCloudSignal(segmented);*/
+    	auto segmented = seg.segment(cloud);
+    	multiCloudSignal(segmented);
     }
 
     void start()
