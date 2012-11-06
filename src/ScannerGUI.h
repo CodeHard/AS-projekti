@@ -22,21 +22,24 @@ SOFTWARE.
 
 #pragma once
 
-#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <sstream>
+#include <boost/ptr_container/ptr_vector.hpp>
 
 class ObjectScanner;
 
 namespace askinect
 {
 
-//template <typename CameraT, typename PointT>
 class ScannerGUI
 {
 private:
-    pcl::visualization::CloudViewer viewer;
+	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+	boost::ptr_vector<pcl::PointCloud<pcl::PointXYZRGB> > coloredSegments;
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr backgroundCloud;
     //ObjectScanner<CameraT, PointT>& scanner;
 public:
-    void keyboardCallback(const pcl::visualization::KeyboardEvent &event, void* none)
+    void keyboardCallback(const pcl::visualization::KeyboardEvent &event)
     {
         if (event.getKeySym() == "space" && event.keyDown())
         {
@@ -53,12 +56,11 @@ public:
 		}
     }
 
-    ScannerGUI() : viewer("openni viewer")
+    ScannerGUI() : viewer(new pcl::visualization::PCLVisualizer("Object scanner")), coloredSegments(), backgroundCloud(new pcl::PointCloud<pcl::PointXYZRGB>)
     {
-        // TODO: fix this, but how?
-    	//boost::function<void (const pcl::visualization::KeyboardEvent &, void*)> f =
-        //boost::bind (&ScannerGUI::keyboardCallback, this, _1);
-    	//viewer.registerKeyboardCallback(f);
+    	boost::function<void (const pcl::visualization::KeyboardEvent &)> f =
+        boost::bind (&ScannerGUI::keyboardCallback, this, _1);
+    	viewer->registerKeyboardCallback(f);
     }
 
     ~ScannerGUI()
@@ -68,31 +70,42 @@ public:
 
     bool running()
     {
-        return !viewer.wasStopped();
+        return !viewer->wasStopped();
     }
     /*  \brief Visualizes point cloud and possibly handles keyboard input (?)
      *	TODO: update to template
      */
-    void update(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr &cloud)
+    void update()
     {
-
-        // visualize
-        viewer.showCloud(cloud);
+    	viewer->spin();
+    }
+/*
+    template <typename PointT>
+    void drawRawData(const typename pcl::PointCloud<PointT>::ConstPtr &cloud) {
+    	viewer->removePointCloud("background");
+        viewer->addPointCloud<PointT>(cloud, "background");
     }
 
-    void drawRawData(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr &cloud) {
-        viewer.showCloud(cloud);
-    }
+        template <typename PointT>
+    void drawSegments(typename std::vector <pcl::PointCloud<PointT> >& newSegments) {
+    */
+    void drawRawData(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr &cloud)
+    {
+    	viewer->removePointCloud("background");
+    	pcl::copyPointCloud(*cloud, *backgroundCloud);
+    	viewer->addPointCloud<pcl::PointXYZRGB>(backgroundCloud, std::string("background"));
+	}
 
-    void drawSegments(typename pcl::PointCloud<pcl::PointXYZRGBA>::CloudVectorType& clouds) {
-    	//TODO: combine clouds
-		pcl::PointCloud<pcl::PointXYZRGB> coloredCloud;
+    void drawSegments(pcl::PointCloud<pcl::PointXYZRGBA>::CloudVectorType& newSegments) {
 
-    	for(unsigned short i=0; i<clouds.size(); i++) {
+    	for(unsigned short i=0; i<newSegments.size(); i++) {
+    		std::cout << "newSegments.size()" << newSegments.size() << std::endl;
+    		std::cout << "coloredSegments.size()" << coloredSegments.size() << std::endl;
+    		if(coloredSegments.size() <= i)
+    			coloredSegments.push_back(new pcl::PointCloud<pcl::PointXYZRGB>());
 
-
-    		pcl::PointCloud<pcl::PointXYZ> singleColorCloud;
-    		pcl::copyPointCloud(clouds.at(i), singleColorCloud);
+    		//result
+    		//pcl::PointCloud<PointT>::Ptr coloredCloud(new pcl::PointCloud<PointT>);
 
     		// Add the extracted plane to the result point cloud
 			uint8_t r, g, b;
@@ -115,15 +128,21 @@ public:
 				b = i*48%255;
 			}
 			pcl::PointXYZRGB xyzrgb_point = pcl::PointXYZRGB(r, g, b);
-			for( int point_number=0; point_number<(int)singleColorCloud.points.size(); point_number++ )
+
+			for( int point_number=0; point_number<(int)newSegments.at(i).points.size(); point_number++ )
 			{
-				xyzrgb_point.x = singleColorCloud.at(point_number).x;
-				xyzrgb_point.y = singleColorCloud.at(point_number).y;
-				xyzrgb_point.z = singleColorCloud.at(point_number).z;
-				coloredCloud.push_back(xyzrgb_point);
+				xyzrgb_point.x = newSegments.at(i).at(point_number).x;
+				xyzrgb_point.y = newSegments.at(i).at(point_number).y;
+				xyzrgb_point.z = newSegments.at(i).at(point_number).z;
+				coloredSegments.at(i).push_back(xyzrgb_point);
 			}
+
+	    	std::stringstream segmentName;
+	    	segmentName << "segment" << i;
+	    	viewer->removePointCloud(segmentName.str());
+			viewer->addPointCloud<pcl::PointXYZRGB>(coloredSegments.at(i).makeShared(), segmentName.str());
     	}
-		viewer.showCloud(coloredCloud.makeShared());
+
     }
 
 
