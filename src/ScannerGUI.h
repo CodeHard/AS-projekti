@@ -85,14 +85,45 @@ public:
     }
 
     void drawSegments(typename pcl::PointCloud<pcl::PointXYZRGBA>::CloudVectorType& clouds) {
+    	//TODO: combine clouds
+		pcl::PointCloud<pcl::PointXYZRGB> coloredCloud;
 
     	for(unsigned short i=0; i<clouds.size(); i++) {
+
+
     		pcl::PointCloud<pcl::PointXYZ> singleColorCloud;
-    		pcl::PointCloud<pcl::PointXYZRGBA> coloredCloud;
     		pcl::copyPointCloud(clouds.at(i), singleColorCloud);
-    		pcl::copyPointCloud(singleColorCloud, coloredCloud);
-    		viewer.showCloud(coloredCloud.makeShared());
+
+    		// Add the extracted plane to the result point cloud
+			uint8_t r, g, b;
+			if( i%3 == 0 )
+			{
+				r = i*48%255;
+				g = 0;
+				b = 0;
+			}
+			else if( i%3 == 1 )
+			{
+				r = 0;
+				g = i*48%255;
+				b = 0;
+			}
+			else
+			{
+				r = 0;
+				g = 0;
+				b = i*48%255;
+			}
+			pcl::PointXYZRGB xyzrgb_point = pcl::PointXYZRGB(r, g, b);
+			for( int point_number=0; point_number<(int)singleColorCloud.points.size(); point_number++ )
+			{
+				xyzrgb_point.x = singleColorCloud.at(point_number).x;
+				xyzrgb_point.y = singleColorCloud.at(point_number).y;
+				xyzrgb_point.z = singleColorCloud.at(point_number).z;
+				coloredCloud.push_back(xyzrgb_point);
+			}
     	}
+		viewer.showCloud(coloredCloud.makeShared());
     }
 
 

@@ -53,6 +53,7 @@ public:
 
 	typename pcl::PointCloud<T>::CloudVectorType& segment(const typename pcl::PointCloud<T>::ConstPtr &cloud)
 	{
+		segments.clear();
 		pcl::copyPointCloud(*cloud, cloudCopy);
 		//iterate cloud as many times as new segments are found
 		for(int i=0; i<3; i++) {
