@@ -30,6 +30,8 @@ SOFTWARE.
 #include "../ModelRecorder.h"
 #include "../OpenNICamera.h"
 
+#include <X11/Xlib.h>
+
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudType;
 typedef pcl::PointXYZRGBA PointType;
 typedef askinect::OpenNICamera CameraType;
@@ -92,7 +94,7 @@ public:
 
     void visualizeSingleCloud_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
     	// show single cloud
-    	gui.drawRawData(cloud);
+    	//gui.drawRawData(cloud);
     }
 
     void visualizeMultiCloud_cb_(typename pcl::PointCloud<PointT>::CloudVectorType& clouds) {
@@ -112,8 +114,9 @@ public:
         while (gui.running())
         {
             // main loop is empty, as cloud data is routed directly to ScannerGUI::update(), by boost signals
+            boost::this_thread::sleep(boost::posix_time::milliseconds (500));
         	gui.update();
-            boost::this_thread::sleep(boost::posix_time::milliseconds (5));
+
         }
 
         // in the end, save the cloud to a file

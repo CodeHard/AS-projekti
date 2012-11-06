@@ -56,7 +56,7 @@ public:
 		segments.clear();
 		pcl::copyPointCloud(*cloud, cloudCopy);
 		//iterate cloud as many times as new segments are found
-		for(int i=0; i<3; i++) {
+		for(int i=0; i<5; i++) {
 			seg.setInputCloud(cloudCopy.makeShared());
 			seg.segment (*inliers, *coefficients);
 			if (inliers->indices.size () == 0)
