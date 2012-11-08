@@ -38,36 +38,72 @@ private:
 	boost::ptr_vector<pcl::PointCloud<pcl::PointXYZRGB> > coloredSegments;
 	boost::ptr_vector<pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> > colorHandlers;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr backgroundCloud;
+	int currentPlaneIdx;
+	bool newSegmentDataWanted;
+	bool newBackgroundDataWanted;
     //ObjectScanner<CameraT, PointT>& scanner;
 public:
-    void keyboardCallback(const pcl::visualization::KeyboardEvent &event)
-    {
-        if (event.getKeySym() == "space" && event.keyDown())
-        {
-            std::cout << "space pressed!" << std::endl;
-            //scanner.doSomething();
-        }
-        if (event.getKeyCode() == 39 && event.keyDown())	// choose next pointcloud by right arrow
-        {
-            std::cout << "moving to next pointcloud" << std::endl;
-        }
-		if (event.getKeyCode() == 40 && event.keyDown())	// choose previous pointcloud by left arrow
-		{
-			std::cout << "moving to previous pointcloud" << std::endl;
-		}
-    }
 
-    ScannerGUI() : viewer(new pcl::visualization::PCLVisualizer("Object scanner")), coloredSegments(), colorHandlers(), backgroundCloud(new pcl::PointCloud<pcl::PointXYZRGB>)
+    ScannerGUI() : viewer(new pcl::visualization::PCLVisualizer("Object scanner")),
+    		coloredSegments(),
+    		colorHandlers(),
+    		backgroundCloud(new pcl::PointCloud<pcl::PointXYZRGB>),
+    		currentPlaneIdx(-1),
+    		newSegmentDataWanted(true),
+    		newBackgroundDataWanted(true)
     {
     	boost::function<void (const pcl::visualization::KeyboardEvent &)> f =
         boost::bind (&ScannerGUI::keyboardCallback, this, _1);
     	viewer->registerKeyboardCallback(f);
+
+		std::string guidetext = "Keyboard controls:\n  Left/Right arrows = Select segment\n  S = Save model\n  R = Refresh data\n  Q = Quit";
+		viewer->addText(guidetext, 250, 30, "guideText");
+		viewer->addCoordinateSystem(0.3);
+		viewer->setCameraPosition(0.0, 0.0, -3.0, 0.0, -1.0, 0.0, 0);
     }
 
     ~ScannerGUI()
     {
     }
 
+    void keyboardCallback(const pcl::visualization::KeyboardEvent &event)
+	{
+    	if (event.getKeySym() == "s" && event.keyDown())
+		{
+			std::cout << "Saving (not really)" << std::endl;
+			//scanner.doSomething();
+		}
+		if (event.getKeySym() == "r" && event.keyDown ())
+		{
+			std::cout << "Refreshing clouds." << std::endl;
+
+			// remove the old selected cloud from the visualization
+			//std::stringstream cloudName;
+			//cloudName << "segment" << currentPlaneIdx;
+			//viewer->removePointCloud(cloudName.str());
+			currentPlaneIdx = -1;
+			newSegmentDataWanted = true;
+			newBackgroundDataWanted = true;
+		}
+		if ( (event.getKeySym() == "space" || event.getKeySym() == "Right")  && event.keyDown ())
+			{
+				currentPlaneIdx++;
+				if(currentPlaneIdx >= coloredSegments.size())
+					currentPlaneIdx = 0;
+				std::cout << "Next plane selected. #" << currentPlaneIdx << std::endl;
+				drawColoredSegments();
+			}
+			if (event.getKeySym() == "Left" && event.keyDown ())
+			{
+				currentPlaneIdx--;
+				if(currentPlaneIdx < 0)
+					currentPlaneIdx = coloredSegments.size() - 1;
+				if(currentPlaneIdx < 0)
+					currentPlaneIdx = 0;
+				std::cout << "Previous plane selected. #" << currentPlaneIdx << std::endl;
+				drawColoredSegments();
+			}
+	}
 
     bool running()
     {
@@ -78,65 +114,119 @@ public:
      */
     void update()
     {
-    	std::cout << "gui.update();" << std::endl;
     	viewer->spin();
-    	std::cout << "gui.update();" << std::endl;
-    }
-/*
-    template <typename PointT>
-    void drawRawData(const typename pcl::PointCloud<PointT>::ConstPtr &cloud) {
-    	viewer->removePointCloud("background");
-        viewer->addPointCloud<PointT>(cloud, "background");
     }
 
-        template <typename PointT>
-    void drawSegments(typename std::vector <pcl::PointCloud<PointT> >& newSegments) {
-    */
-    void drawRawData(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr &cloud)
-    {
-    	//std::cout << "drawRaw upd" << std::endl;
-		pcl::copyPointCloud(*cloud, *backgroundCloud);
-    	if(! viewer->updatePointCloud<pcl::PointXYZRGB>(backgroundCloud, std::string("background")))
-    	{
-    		//std::cout << "drawRaw add" << std::endl;
-    		viewer->addPointCloud<pcl::PointXYZRGB>(backgroundCloud, std::string("background"));
-    	}
-    	//std::cout << "drawRaw add ready" << std::endl;
+	template <typename PointT>
+	void addOrUpdateCloud(typename pcl::PointCloud<PointT>::Ptr cloud, std::string id)
+	{
+		if( !viewer->updatePointCloud(cloud, id)) {
+			viewer->addPointCloud<PointT>(cloud, id);
+		}
+	    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,
+cloud->at(0).r, cloud->at(0).g, cloud->at(0).b, id);
 	}
 
-    void drawSegments(pcl::PointCloud<pcl::PointXYZRGBA>::CloudVectorType& newSegments) {
-    	//std::cout << "drawSeg" << std::endl;
-    	for(unsigned short i=0; i<newSegments.size(); i++) {
-    		//std::cout << "Seg " << i << std::endl;
-    		//std::cout << "newSegments.size()" << newSegments.size() << std::endl;
-    		//std::cout << "coloredSegments.size()" << coloredSegments.size() << std::endl;
-    		if(coloredSegments.size() <= i) {
-    			//std::cout << "Seg " << i << "push back new PC" << std::endl;
-    			coloredSegments.push_back(new pcl::PointCloud<pcl::PointXYZRGB>());
-    			//std::cout << "Seg " << i << "push back new PC" << std::endl;
+	// same as addOrUpdateCloud, but with different color
+	template <typename PointT>
+	void addOrUpdateSelectedCloud(typename pcl::PointCloud<PointT>::Ptr cloud, std::string id)
+	{
+		if( !viewer->updatePointCloud(cloud, id)) {
+			viewer->addPointCloud<PointT>(cloud, id);
+		}
+		viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,
+0.9, 0.9, 0.9, id);
+	}
+
+	// same as addOrUpdateCloud, but with different color
+
+	void addOrUpdateBackground(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, std::string id)
+	{
+		/*
+		// purkkaa, rgb colors not showing at all
+		if(colorHandlers.size() == 0) {
+			colorHandlers.push_back(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB>(cloud));
+		}
+		else {
+			colorHandlers.clear();
+			colorHandlers.push_back(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB>(cloud));
+		}
+		if( !viewer->updatePointCloud(cloud, colorHandlers.at(0), id)) {
+			viewer->addPointCloud<pcl::PointXYZRGB>(cloud, colorHandlers.at(0), id);
+		}
+		*/
+		if( !viewer->updatePointCloud<pcl::PointXYZRGB>(cloud, id)) {
+			viewer->addPointCloud<pcl::PointXYZRGB>(cloud,  id);
+		}
+		viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,
+		0.2, 0.2, 0.2, id);
+	}
+
+    void drawAll() {
+    	//viewer->removeAllPointClouds();
+    	drawBackground();
+    	drawColoredSegments();
+    }
+
+    void drawBackground()
+    {
+    	addOrUpdateBackground(backgroundCloud, std::string("background"));
+    }
+
+    void drawColoredSegments()
+    {
+    	for(unsigned int i = 0; i < coloredSegments.size(); i++) {
+    		std::stringstream cloudName;
+    		cloudName << "segment" << i;
+    		if(i == currentPlaneIdx) {
+    			addOrUpdateSelectedCloud<pcl::PointXYZRGB>(coloredSegments.at(i).makeShared(), cloudName.str());
+    		} else {
+    			addOrUpdateCloud<pcl::PointXYZRGB>(coloredSegments.at(i).makeShared(), cloudName.str());
     		}
-    		//result
-    		//pcl::PointCloud<PointT>::Ptr coloredCloud(new pcl::PointCloud<PointT>);
+    	}
+    }
+
+    void updateBackgroundData(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr &cloud)
+    {
+    	if(!newBackgroundDataWanted)
+    	    return;
+
+		pcl::copyPointCloud(*cloud, *backgroundCloud);
+		drawBackground();
+		newBackgroundDataWanted = false;
+	}
+
+    void updateSegmentData(pcl::PointCloud<pcl::PointXYZRGBA>::CloudVectorType& newSegments) {
+    	if(!newSegmentDataWanted)
+    		return;
+
+    	coloredSegments.clear();
+    	// make a colored copy of the segments for drawing
+    	for(unsigned short i=0; i<newSegments.size(); i++) {
+    		if(coloredSegments.size() <= i) {
+        		std::cout << "Coloring segment #" << i << std::endl;
+    			coloredSegments.push_back(new pcl::PointCloud<pcl::PointXYZRGB>());
+    		}
 
     		// Add the extracted plane to the result point cloud
 			uint8_t r, g, b;
 			if( i%3 == 0 )
 			{
-				r = i*48%255;
+				r = (i+1)*48%255;
 				g = 0;
-				b = 0;
+				b = (255 - i*50)%255;
 			}
 			else if( i%3 == 1 )
 			{
-				r = 0;
-				g = i*48%255;
+				r = (255 - i*20)%255;;
+				g = (i+1)*48%255;
 				b = 0;
 			}
 			else
 			{
 				r = 0;
-				g = 0;
-				b = i*48%255;
+				g = (128 + i*10)%255;
+				b = (i+1)*48%255;
 			}
 			pcl::PointXYZRGB xyzrgb_point = pcl::PointXYZRGB(r, g, b);
 
@@ -150,21 +240,16 @@ public:
 
 	    	std::stringstream segmentName;
 	    	segmentName << "segment" << i;
-    		//std::cout << "Seg " << i << "upd PC" << std::endl;
-    		if(! viewer->updatePointCloud<pcl::PointXYZRGB>(coloredSegments.at(i).makeShared(), segmentName.str()) )
-    		{
-    			//colorHandlers.push_back(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB>(coloredSegments.at(i).makeShared()));
-    			//std::cout << "Seg " << i << "add PC" << std::endl;
-    			// .at(i) probably is a bit unsafe
-    			viewer->addPointCloud<pcl::PointXYZRGB>(coloredSegments.at(i).makeShared(), /*colorHandlers.at(i),*/ segmentName.str());
-    			//viewer->initCameraParameters ();
-    		}
-    		//std::cout << "Seg " << i << std::endl;
+
+			if(currentPlaneIdx < 0) {
+				currentPlaneIdx = 0;
+			}
+
     	}
-    	std::cout << "drawSeg" << std::endl;
+    	drawColoredSegments();
+    	drawColoredSegments();
+    	newSegmentDataWanted = false;
     }
-
-
 
 
 };

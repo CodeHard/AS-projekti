@@ -82,7 +82,7 @@ public:
     //NOTE: this version of newdata callback is meant for recording data for SimulatorCamera, not actual object scanning
     void record_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
     	// show single cloud
-    	gui.drawRawData(cloud);
+    	//gui.drawRawData(cloud);
     	std::stringstream file_name;
 		file_name << "frame";
 		file_name.fill('0');
@@ -92,16 +92,16 @@ public:
 		fileHandler.writePointCloudToFile(file_name.str(), cloud);
     }
 
+    // not actually responsible of visualizing
     void visualizeSingleCloud_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
-    	// show single cloud
-    	//gui.drawRawData(cloud);
+    	gui.updateBackgroundData(cloud);
     }
 
+    // not actually responsible of visualizing
     void visualizeMultiCloud_cb_(typename pcl::PointCloud<PointT>::CloudVectorType& clouds) {
-    	// show single cloud
 
     	if(!clouds.empty()) {
-    		gui.drawSegments(clouds);
+    		gui.updateSegmentData(clouds);
     	}
     }
 
@@ -114,7 +114,8 @@ public:
         while (gui.running())
         {
             // main loop is empty, as cloud data is routed directly to ScannerGUI::update(), by boost signals
-            boost::this_thread::sleep(boost::posix_time::milliseconds (500));
+            boost::this_thread::sleep(boost::posix_time::milliseconds (5));
+
         	gui.update();
 
         }
