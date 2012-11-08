@@ -30,8 +30,6 @@ SOFTWARE.
 #include "../ModelRecorder.h"
 #include "../OpenNICamera.h"
 
-#include <X11/Xlib.h>
-
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudType;
 typedef pcl::PointXYZRGBA PointType;
 typedef askinect::OpenNICamera CameraType;
