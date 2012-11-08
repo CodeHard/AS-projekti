@@ -51,7 +51,7 @@ std::vector<std::string> getFiles(std::string directory, boost::regex filter)
         if ( !boost::regex_match( i->path().filename().string(), what, filter ) ) continue;
 
         // File matches, store it
-        allMatchingFiles.push_back( i->path().string() );
+        allMatchingFiles.push_back( i->path().filename().string() );
     }
 
     return allMatchingFiles;

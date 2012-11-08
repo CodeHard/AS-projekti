@@ -21,35 +21,45 @@ SOFTWARE.
 */
 
 #include <iostream>
-#include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
-#include "../src/Register.h"
-#include "../src/FileHandler.h"
+#include <pcl/visualization/cloud_viewer.h>
+#include "../src/ModelRecorder.h"
 
 int main ()
 {
-    askinect::FileHandler files("../../test/data/testregister/");
+    auto directory = "../../test/data/table_binary/";
 
-	std::cout << "Loading point clouds from two files..." << std::endl;
+    std::cout << "Creating model recorder..." << std::endl;
 
-    pcl::PointCloud<pcl::PointXYZRGB> cloud, cloud2;
-    files.loadPointCloudFromFile("frame1.pcd", cloud);
-    files.loadPointCloudFromFile("frame2.pcd", cloud2);
+    askinect::ModelRecorder<askinect::SimulatorCamera<pcl::PointXYZRGB>, pcl::PointXYZRGB> rec;
+    rec.camera.refreshRate = 30;
+    rec.camera.directory = directory;
 
-	std::cout << "Reading files completed. Starting registration..." << std::endl;
+    std::cout << "Creating cloud viewer..." << std::endl;
 
-    askinect::Register<pcl::PointXYZRGB> reg;
-    auto cloud3 = reg.registerNew(cloud);
+    pcl::visualization::CloudViewer v ("Testing table_binary folder");
 
-	files.writePointCloudToFile("pre-result.pcd", cloud3);
-	
-	std::cout << "First cloud registered. Registering the second cloud..." << std::endl;
+    std::cout << "Creating lambda function..." << std::endl;
 
-    auto cloud4 = reg.registerNew(cloud2);
+    boost::function<void (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr)> func = [&v] (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr & cloud)
+    {
+      v.showCloud(cloud);
+    };
 
-	std::cout << "All clouds registered. Saving resulting cloud..." << std::endl;
+    std::cout << "Registering lambda function as a callback..." << std::endl;
 
-    files.writePointCloudToFile("result.pcd", cloud4);
+    rec.registerSingleCloudCallback(func);
+
+    std::cout << "Starting model recorder..." << std::endl;
+
+    rec.start();
+
+    std::cout << "Waiting for viewer stop event..." << std::endl;
+
+    while (!v.wasStopped())
+    {}
+
+    std::cout << "Viewer was stopped, exiting..." << std::endl;
 
     return 0;
 }

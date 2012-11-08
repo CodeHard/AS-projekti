@@ -21,10 +21,18 @@ SOFTWARE.
 */
 
 #pragma once
+#include <iostream>
 #include <pcl/point_cloud.h>
 #include <boost/function.hpp>
 #include <boost/signals2/signal.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
+#include <boost/make_shared.hpp>
 #include <string>
+#include "FileHandler.h"
+#include "Common.h"
 
 class boost::signals2::connection;
 
@@ -48,6 +56,27 @@ public:
     boost::signals2::connection registerCallback(const boost::function<T> &callback)
     {
         return sig.connect(callback);
+    }
+
+    void start()
+    {
+        FileHandler fileHandler(directory);
+        boost::regex filter(".*\\.pcd");
+        auto files = getFiles(directory, filter);
+
+        sort(files.begin(), files.end());
+
+        auto file = files.begin();
+        while (file != files.end())
+        {
+            std::cout << "(SimulatorCamera.h) Reading file " << *file << std::endl;
+            pcl::PointCloud<PointT> cloud;
+            fileHandler.loadPointCloudFromFile(*file, cloud);
+            sig(boost::make_shared<const pcl::PointCloud<PointT> >(cloud));
+            file++;
+
+            boost::this_thread::sleep(boost::posix_time::milliseconds(1000 / refreshRate));
+        }
     }
 };
 

@@ -22,10 +22,16 @@ SOFTWARE.
 
 #pragma once
 #include <iostream>
+#include <boost/make_shared.hpp>
 #include <pcl/point_cloud.h>
-#include <pcl/registration/ndt.h>
-#include <pcl/filters/approximate_voxel_grid.h>
+#include <pcl/registration/icp.h>
+#include <pcl/registration/ia_ransac.h>
+#include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/filter.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/features/fpfh_omp.h>
+#include <pcl/features/normal_3d_omp.h>
+
 
 namespace askinect
 {
@@ -37,73 +43,140 @@ private:
     pcl::PointCloud<T> previousCloud;
     bool isInitialized;
 
+    typename pcl::PointCloud<T>::Ptr initialFilter(const pcl::PointCloud<T> &cloud)
+    {
+
+		// remove nans
+        typename pcl::PointCloud<T>::Ptr filtered(new pcl::PointCloud<T>);
+        std::vector<int> indices;
+        pcl::removeNaNFromPointCloud(cloud, *filtered, indices);
+
+		// limit z-distance
+        pcl::PassThrough<T> pass;
+        pass.setInputCloud (filtered);
+        pass.setFilterFieldName ("z");
+        pass.setFilterLimits (-1.5, 1.5);
+        pass.filter (*filtered);
+
+		// down sample
+        pcl::VoxelGrid<T> sor;
+        sor.setInputCloud (filtered);
+        sor.setLeafSize (0.03f, 0.03f, 0.03f);
+        typename pcl::PointCloud<T>::Ptr output(new pcl::PointCloud<T>);
+        sor.filter (*output);
+
+        return output;
+    }
+
+    typename pcl::PointCloud<pcl::Normal>::Ptr getNormals(typename pcl::PointCloud<T>::Ptr cloud)
+    {
+        // Create the normal estimation class, and pass the input dataset to it
+        pcl::NormalEstimation<T, pcl::Normal> ne;
+        ne.setInputCloud (cloud);
+
+        // Create an empty kdtree representation, and pass it to the normal estimation object.
+        // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+        pcl::search::KdTree<T>::Ptr tree (new pcl::search::KdTree<T> ());
+        ne.setSearchMethod (tree);
+
+        // Output datasets
+        pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
+
+        // Use all neighbors in a sphere of radius 3cm
+        ne.setRadiusSearch (0.03);
+
+        // Compute the features
+        ne.compute (*cloud_normals);
+
+        return cloud_normals;
+    }
+
+    typename const pcl::PointCloud<pcl::FPFHSignature33>::ConstPtr getFeatures(typename pcl::PointCloud<T>::Ptr cloud)
+    {
+        pcl::PointCloud<pcl::Normal>::Ptr normals = getNormals(cloud);
+        pcl::FPFHEstimationOMP<T, pcl::Normal, pcl::FPFHSignature33> fpfh;
+        fpfh.setInputCloud (cloud);
+        fpfh.setInputNormals (normals);
+        pcl::search::KdTree<T>::Ptr tree (new pcl::search::KdTree<T>);
+        fpfh.setSearchMethod (tree);
+        pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfhs (new pcl::PointCloud<pcl::FPFHSignature33> ());
+        fpfh.setRadiusSearch (0.05);
+        fpfh.compute (*fpfhs);
+
+        const pcl::PointCloud<pcl::FPFHSignature33>::ConstPtr returnVal(fpfhs);
+        return returnVal;
+    }
+
 public:
     Register() : isInitialized(false) {}
     ~Register() {}
 
     const pcl::PointCloud<T> &registerNew(const pcl::PointCloud<T> &newCloud)
     {
+        typename pcl::PointCloud<T>::Ptr filtered = initialFilter(newCloud);
 
         if (isInitialized)
         {
-            pcl::PointCloud<T> nansRemoved;
-            std::vector<int> indices;
+			askinect::FileHandler files("../../test/data/testregister/");
 
-            pcl::removeNaNFromPointCloud(newCloud, nansRemoved, indices);
+			files.writePointCloudToFile("filtered.pcd", *filtered);
 
-            boost::shared_ptr<const pcl::PointCloud<T> > newCloudPtr(&nansRemoved);
+            typename pcl::PointCloud<T>::Ptr previousCloudPtr(new pcl::PointCloud<T>);
+            *previousCloudPtr = previousCloud;
 
-            pcl::PointCloud<T> copy = previousCloud;
-            boost::shared_ptr<const pcl::PointCloud<T> > previousCloudPtr(&copy);
+            pcl::SampleConsensusInitialAlignment<T, T, pcl::FPFHSignature33> sac;
 
-            typename pcl::PointCloud<T>::Ptr filtered_cloud (new pcl::PointCloud<T>);
-            typename pcl::ApproximateVoxelGrid<T> approximate_voxel_filter;
-            approximate_voxel_filter.setLeafSize (0.2, 0.2, 0.2);
+            std::cout << "Getting features..." << std::endl;
 
-            approximate_voxel_filter.setInputCloud (newCloudPtr);
-            approximate_voxel_filter.filter (*filtered_cloud);
+            sac.setInputSource(filtered);
+            sac.setSourceFeatures(getFeatures(filtered));
 
-            typename pcl::NormalDistributionsTransform<T, T> ndt;
-            // Setting scale dependent NDT parameters
-            // Setting minimum transformation difference for termination condition.
-            ndt.setTransformationEpsilon (0.01);
-            // Setting maximum step size for More-Thuente line search.
-            ndt.setStepSize (0.1);
-            //Setting Resolution of NDT grid structure (VoxelGridCovariance).
-            ndt.setResolution (1.0);
-            // Setting max number of registration iterations.
-            ndt.setMaximumIterations (35);
-            // Setting point cloud to be aligned.
-            ndt.setInputSource (filtered_cloud);
-            // Setting point cloud to be aligned to.
-            ndt.setInputTarget (previousCloudPtr);
+            sac.setInputTarget(previousCloudPtr);
+            sac.setTargetFeatures(getFeatures(previousCloudPtr));
 
-            // Calculating required rigid transform to align the input cloud to the target cloud.
-            typename pcl::PointCloud<T>::Ptr output_cloud (new pcl::PointCloud<T>);
-            ndt.align (*output_cloud, Eigen::Matrix4f::Identity());
+            typename pcl::PointCloud<T>::Ptr alignedCloud(new pcl::PointCloud<T>);
 
-            std::cout << "Normal Distributions Transform has converged:" << ndt.hasConverged ()
-                      << " score: " << ndt.getFitnessScore () << std::endl;
+            std::cout << "Doing first alignment..." << std::endl;
 
-            // Transforming unfiltered, input cloud using found transform.
-            pcl::transformPointCloud (nansRemoved, *output_cloud, ndt.getFinalTransformation ());
+            sac.align(*alignedCloud);
 
-            std::cout << "Cloud transformed. Setting previous cloud to result cloud..." << std::endl;
+			files.writePointCloudToFile("first-alignment.pcd", *alignedCloud);
 
-            previousCloud = *output_cloud;
+            pcl::IterativeClosestPoint<T, T> icp;
 
-            std::cout << "Output cloud saved." << std::endl;
+            icp.setInputSource(alignedCloud);
+
+            icp.setInputTarget(previousCloudPtr);
+
+            // Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
+            icp.setMaxCorrespondenceDistance (0.2);
+            icp.setRANSACOutlierRejectionThreshold(0.2);
+            // Set the maximum number of iterations (criterion 1)
+            icp.setMaximumIterations (50);
+            // Set the transformation epsilon (criterion 2)
+            icp.setTransformationEpsilon (1e-8);
+            // Set the euclidean distance difference epsilon (criterion 3)
+            icp.setEuclideanFitnessEpsilon (10);
+
+            pcl::PointCloud<T> alignedCloud2;
+
+            std::cout << "Doing ICP..." << std::endl;
+
+            icp.align(alignedCloud2);
+
+            std::cout << "has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore() << std::endl;
+            std::cout << icp.getFinalTransformation() << std::endl;
+
+            previousCloud = alignedCloud2;
 
         }
         else
         {
-            std::vector<int> indices;
-            pcl::removeNaNFromPointCloud(newCloud, previousCloud, indices);
+            previousCloud = *filtered;
             isInitialized = true;
         }
 
         return previousCloud;
-
     }
 };
 

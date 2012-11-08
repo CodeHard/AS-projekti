@@ -69,7 +69,7 @@ public:
 
     void capture_cb_(typename pcl::PointCloud<PointT>::ConstPtr const &cloud)
     {
-    	singleCloudSignal(cloud);
+    	singleCloudSignal(boost::make_shared<pcl::PointCloud<PointT> >(reg.registerNew(*cloud)));
         /*auto calibrated = calibrate(*cloud);
         auto registered = reg.registerNew(calibrated);
         auto filteredModel = filter.updateModel(registered);
