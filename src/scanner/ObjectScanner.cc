@@ -62,17 +62,13 @@ public:
     	            boost::bind (&ObjectScanner::newBackground_cb_, this, _1);
     	modelRecorder.registerSingleCloudCallback(f);
 
-    	boost::function<void (typename pcl::PointCloud<PointT>::CloudVectorType&)> f2 =
-    	    	            boost::bind (&ObjectScanner::visualizeMultiCloud_cb_, this, _1);
-    	modelRecorder.registerMultiCloudCallback(f2);
-
-    	boost::function<void (typename askinect::ModelData<PointT>)> f3 =
+    	boost::function<void (typename askinect::ModelData<PointT>)> f2 =
     	    	    	            boost::bind (&ObjectScanner::modelData_cb_, this, _1);
-    	modelRecorder.registerModelDataCallback(f3);
+    	modelRecorder.registerModelDataCallback(f2);
 
-    	boost::function<void (std::string)> f4 =
+    	boost::function<void (std::string)> f3 =
     	            boost::bind (&ObjectScanner::saveObject_cb_, this, _1);
-    	gui.registerSaveObjectCallback(f4);
+    	gui.registerSaveObjectCallback(f3);
 
 
     }
@@ -108,25 +104,22 @@ public:
 		fileHandler.writePointCloudToFile(file_name.str(), cloud);
     }
 
-    // not actually responsible of visualizing
     void newBackground_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
     	gui.updateBackgroundData(cloud);
     }
 
-    // not actually responsible of visualizing
-    void visualizeMultiCloud_cb_(typename pcl::PointCloud<PointT>::CloudVectorType& clouds) {
-
-    	if(!clouds.empty()) {
-    		gui.updateSegmentData(clouds);
-    	}
-    }
-
     void modelData_cb_ ( typename askinect::ModelData<PointT> model) {
 		if (!model.segments.empty()) {
-			gui.updateSegmentData(model.segments);
+			if(gui.wantsData()) {
+				gui.clearViewer();
+				gui.updateBackgroundData(model.rawCloud);
+				gui.updateSegmentData(model.segments);
+				gui.drawAll();
+				gui.drawAll();
+				gui.gotData();
+			}
 		}
     }
-
 
     /* \brief This function is possibly not needed
      *
@@ -141,13 +134,6 @@ public:
         	gui.update();
 
         }
-
-        // in the end, save the cloud to a file
-        // TODO: save anytime with a keyboard command
-        //const PointCloudType constCloud = const_cast<PointCloudType>(objectCloud);
-        std::string objectName = "kahvikuppi";
-        // TODO: get cloud data from somewhere to write it
-        //fileHandler.writePointCloudToFile(objectName, objectCloud);
     }
 };
 

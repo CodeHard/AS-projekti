@@ -44,7 +44,6 @@ private:
     Filter<PointT> filter;
     Segment<PointT> seg;
     ModelData<PointT> modelData;
-    boost::signals2::signal<void (typename pcl::PointCloud<PointT>::CloudVectorType&)> multiCloudSignal;
     boost::signals2::signal<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> singleCloudSignal;
     boost::signals2::signal<void (typename askinect::ModelData<PointT>)> modelDataSignal;
 
@@ -58,15 +57,7 @@ public:
         camera.registerCallback(f);
     }
 
-    ~ModelRecorder() {
-    	//delete[] modelData;
-    }
-
-    template<typename T>
-    boost::signals2::connection registerMultiCloudCallback(const boost::function<T> &callback)
-    {
-        return multiCloudSignal.connect(callback);
-    }
+    ~ModelRecorder() {}
 
     template<typename T>
 	boost::signals2::connection registerSingleCloudCallback(const boost::function<T> &callback) {
@@ -83,13 +74,13 @@ public:
     {
     	pcl::PointCloud<PointT> cloudCopy;
     	pcl::copyPointCloud(*cloud, cloudCopy);
-    	//modelData = new ModelData<PointT>(cloud);
-    	std::cout << "MOI" << std::endl;
+
+    	// all data is collected to this struct and then sent to ObjectScanner -> GUI via signals
     	modelData = ModelData<PointT>();
-    	std::cout << "MOI" << std::endl;
+
     	pcl::copyPointCloud(*cloud, modelData.rawCloud);
-    	std::cout << "MOI" << std::endl;
-    	singleCloudSignal(cloud);
+
+    	//singleCloudSignal(cloud);
 
         /*auto calibrated = calibrate(*cloud);
         auto registered = reg.registerNew(calibrated);
@@ -98,7 +89,6 @@ public:
         multiCloudSignal(segmented);*/
     	seg.segment(modelData);
 
-    	//multiCloudSignal(segmented);
     	modelDataSignal(modelData);
 
     }

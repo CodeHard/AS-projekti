@@ -42,8 +42,7 @@ private:
     boost::ptr_vector<pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> > colorHandlers;
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr backgroundCloud;
     int currentSegmentIdx;
-    bool newSegmentDataWanted;
-    bool newBackgroundDataWanted;
+    bool newDataWanted;
     boost::signals2::signal<void (std::string)> saveObjectSignal;
 public:
 
@@ -52,8 +51,7 @@ public:
         colorHandlers(),
         backgroundCloud(new pcl::PointCloud<pcl::PointXYZRGB>),
         currentSegmentIdx(-1),
-        newSegmentDataWanted(true),
-        newBackgroundDataWanted(true)
+        newDataWanted(true)
     {
         boost::function<void (const pcl::visualization::KeyboardEvent &)> f =
             boost::bind (&ScannerGUI::keyboardCallback, this, _1);
@@ -89,15 +87,12 @@ public:
         }
         if (event.getKeySym() == "r" && event.keyDown ())
         {
-            std::cout << "RefbjectScannerreshing clouds." << std::endl;
+            std::cout << "Refreshing clouds." << std::endl;
 
-            // remove the old selected cloud from the visualization
-            //std::stringstream cloudName;
-            //cloudName << "segment" << currentSegmentIdx;
-            //viewer->removePointCloud(cloudName.str());
+            //viewer->removeAllPointClouds();
+            //coloredSegments.clear();
             currentSegmentIdx = -1;
-            newSegmentDataWanted = true;
-            newBackgroundDataWanted = true;
+            newDataWanted = true;
         }
         if ( (event.getKeySym() == "space" || event.getKeySym() == "Right")  && event.keyDown ())
         {
@@ -186,13 +181,17 @@ public:
 
     void drawAll()
     {
-        //viewer->removeAllPointClouds();
         drawBackground();
         drawColoredSegments();
     }
 
+    void clearViewer() {
+    	viewer->removeAllPointClouds();
+    }
+
     void drawBackground()
     {
+    	std::cout << "Drawing BG with " << backgroundCloud->points.size() << " points.\n";
         addOrUpdateBackground(backgroundCloud, std::string("background"));
     }
 
@@ -213,22 +212,28 @@ public:
         }
     }
 
-    void updateBackgroundData(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr &cloud)
-    {
-        if (!newBackgroundDataWanted)
-            return;
-
-        pcl::copyPointCloud(*cloud, *backgroundCloud);
-        drawBackground();
-        drawBackground();
-        newBackgroundDataWanted = false;
+    bool wantsData() {
+    	return newDataWanted;
     }
 
-    void updateSegmentData(pcl::PointCloud<pcl::PointXYZRGBA>::CloudVectorType &newSegments)
-    {
-        if (!newSegmentDataWanted)
-            return;
+    void gotData() {
+    	newDataWanted = false;
+    }
 
+    void updateBackgroundData(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr &cloud)
+    {
+        pcl::copyPointCloud(*cloud, *backgroundCloud);
+    }
+
+    void updateBackgroundData(pcl::PointCloud<pcl::PointXYZRGBA> cloud)
+    {
+    	std::cout << "updating bg data\n";
+        pcl::copyPointCloud(cloud, *backgroundCloud);
+    }
+
+    void updateSegmentData(pcl::PointCloud<pcl::PointXYZRGBA>::CloudVectorType newSegments)
+    {
+    	std::cout << "updating segment data\n";
         coloredSegments.clear();
         // make a colored copy of the segments for drawing
         for (unsigned short i = 0; i < newSegments.size(); i++)
@@ -278,9 +283,6 @@ public:
             }
 
         }
-        drawColoredSegments();
-        drawColoredSegments();
-        newSegmentDataWanted = false;
     }
 
 
