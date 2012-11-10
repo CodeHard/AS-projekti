@@ -23,12 +23,13 @@ SOFTWARE.
 #include <pcl/io/openni_grabber.h>
 #include <pcl/visualization/cloud_viewer.h>
 
+#include "ScannerGUI.h"
 #include "../Calibrate.h"
 #include "../Segment.h"
 #include "../FileHandler.h"
-#include "../ScannerGUI.h"
 #include "../ModelRecorder.h"
 #include "../OpenNICamera.h"
+#include "../DataTypes.h"
 
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudType;
 typedef pcl::PointXYZRGBA PointType;
@@ -58,13 +59,24 @@ public:
         frameCounter(0)
     {
     	boost::function<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> f =
-    	            boost::bind (&ObjectScanner::visualizeSingleCloud_cb_, this, _1);
+    	            boost::bind (&ObjectScanner::newBackground_cb_, this, _1);
     	modelRecorder.registerSingleCloudCallback(f);
 
     	boost::function<void (typename pcl::PointCloud<PointT>::CloudVectorType&)> f2 =
     	    	            boost::bind (&ObjectScanner::visualizeMultiCloud_cb_, this, _1);
     	modelRecorder.registerMultiCloudCallback(f2);
+
+    	boost::function<void (typename askinect::ModelData<PointT>)> f3 =
+    	    	    	            boost::bind (&ObjectScanner::modelData_cb_, this, _1);
+    	modelRecorder.registerModelDataCallback(f3);
+
+    	boost::function<void (std::string)> f4 =
+    	            boost::bind (&ObjectScanner::saveObject_cb_, this, _1);
+    	gui.registerSaveObjectCallback(f4);
+
+
     }
+
     ScannerGUI &getGUI()
     {
         return gui;
@@ -77,6 +89,12 @@ public:
     {
         modelRecorder.start();
     }
+
+    void saveObject_cb_(std::string objectName) {
+    	std::cout << "OS: Saving object\n";
+    	fileHandler.writePointCloudToFile(objectName, gui.getCurrentCloud());
+    }
+
     //NOTE: this version of newdata callback is meant for recording data for SimulatorCamera, not actual object scanning
     void record_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
     	// show single cloud
@@ -91,7 +109,7 @@ public:
     }
 
     // not actually responsible of visualizing
-    void visualizeSingleCloud_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
+    void newBackground_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
     	gui.updateBackgroundData(cloud);
     }
 
@@ -101,6 +119,12 @@ public:
     	if(!clouds.empty()) {
     		gui.updateSegmentData(clouds);
     	}
+    }
+
+    void modelData_cb_ ( typename askinect::ModelData<PointT> model) {
+		if (!model.segments.empty()) {
+			gui.updateSegmentData(model.segments);
+		}
     }
 
 

@@ -25,8 +25,11 @@ SOFTWARE.
 #include <pcl/visualization/pcl_visualizer.h>
 #include <sstream>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include "../DataTypes.h"
+#include <boost/signals2/signal.hpp>
 
-class ObjectScanner;
+class boost::signals2::connection;
+//class ObjectScanner;
 
 namespace askinect
 {
@@ -38,23 +41,25 @@ private:
     boost::ptr_vector<pcl::PointCloud<pcl::PointXYZRGB> > coloredSegments;
     boost::ptr_vector<pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> > colorHandlers;
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr backgroundCloud;
-    int currentPlaneIdx;
+    int currentSegmentIdx;
     bool newSegmentDataWanted;
     bool newBackgroundDataWanted;
-    //ObjectScanner<CameraT, PointT>& scanner;
+    boost::signals2::signal<void (std::string)> saveObjectSignal;
 public:
 
     ScannerGUI() : viewer(new pcl::visualization::PCLVisualizer("Object scanner")),
         coloredSegments(),
         colorHandlers(),
         backgroundCloud(new pcl::PointCloud<pcl::PointXYZRGB>),
-        currentPlaneIdx(-1),
+        currentSegmentIdx(-1),
         newSegmentDataWanted(true),
         newBackgroundDataWanted(true)
     {
         boost::function<void (const pcl::visualization::KeyboardEvent &)> f =
             boost::bind (&ScannerGUI::keyboardCallback, this, _1);
         viewer->registerKeyboardCallback(f);
+
+
 
         std::string guidetext = "Keyboard controls:\n  Left/Right arrows = Select segment\n  S = Save model\n  R = Refresh data\n  Q = Quit";
         viewer->addText(guidetext, 250, 30, "guideText");
@@ -66,43 +71,57 @@ public:
     {
     }
 
+	template<typename T>
+	boost::signals2::connection registerSaveObjectCallback(
+			const boost::function<T> &callback) {
+		return saveObjectSignal.connect(callback);
+	}
+
     void keyboardCallback(const pcl::visualization::KeyboardEvent &event)
     {
         if (event.getKeySym() == "s" && event.keyDown())
         {
-            std::cout << "Saving (not really)" << std::endl;
-            //scanner.doSomething();
+        	std::string objectName;
+            std::cout << "Saving, please enter object name:" << std::endl;
+            std::cin >> objectName;
+            saveObjectSignal(objectName);
+
         }
         if (event.getKeySym() == "r" && event.keyDown ())
         {
-            std::cout << "Refreshing clouds." << std::endl;
+            std::cout << "RefbjectScannerreshing clouds." << std::endl;
 
             // remove the old selected cloud from the visualization
             //std::stringstream cloudName;
-            //cloudName << "segment" << currentPlaneIdx;
+            //cloudName << "segment" << currentSegmentIdx;
             //viewer->removePointCloud(cloudName.str());
-            currentPlaneIdx = -1;
+            currentSegmentIdx = -1;
             newSegmentDataWanted = true;
             newBackgroundDataWanted = true;
         }
         if ( (event.getKeySym() == "space" || event.getKeySym() == "Right")  && event.keyDown ())
         {
-            currentPlaneIdx++;
-            if (currentPlaneIdx >= coloredSegments.size())
-                currentPlaneIdx = 0;
-            std::cout << "Next plane selected. #" << currentPlaneIdx << std::endl;
+            currentSegmentIdx++;
+            if (currentSegmentIdx >= coloredSegments.size())
+                currentSegmentIdx = 0;
+            std::cout << "Next plane selected. #" << currentSegmentIdx << std::endl;
             drawColoredSegments();
         }
         if (event.getKeySym() == "Left" && event.keyDown ())
         {
-            currentPlaneIdx--;
-            if (currentPlaneIdx < 0)
-                currentPlaneIdx = coloredSegments.size() - 1;
-            if (currentPlaneIdx < 0)
-                currentPlaneIdx = 0;
-            std::cout << "Previous plane selected. #" << currentPlaneIdx << std::endl;
+            currentSegmentIdx--;
+            if (currentSegmentIdx < 0)
+                currentSegmentIdx = coloredSegments.size() - 1;
+            if (currentSegmentIdx < 0)
+                currentSegmentIdx = 0;
+            std::cout << "Previous plane selected. #" << currentSegmentIdx << std::endl;
             drawColoredSegments();
         }
+    }
+
+
+    pcl::PointCloud<pcl::PointXYZRGB>& getCurrentCloud() {
+    	return coloredSegments.at(currentSegmentIdx);
     }
 
     bool running()
@@ -183,7 +202,7 @@ public:
         {
             std::stringstream cloudName;
             cloudName << "segment" << i;
-            if (i == currentPlaneIdx)
+            if (i == currentSegmentIdx)
             {
                 addOrUpdateSelectedCloud<pcl::PointXYZRGB>(coloredSegments.at(i).makeShared(), cloudName.str());
             }
@@ -200,6 +219,7 @@ public:
             return;
 
         pcl::copyPointCloud(*cloud, *backgroundCloud);
+        drawBackground();
         drawBackground();
         newBackgroundDataWanted = false;
     }
@@ -252,9 +272,9 @@ public:
             std::stringstream segmentName;
             segmentName << "segment" << i;
 
-            if (currentPlaneIdx < 0)
+            if (currentSegmentIdx < 0)
             {
-                currentPlaneIdx = 0;
+                currentSegmentIdx = 0;
             }
 
         }

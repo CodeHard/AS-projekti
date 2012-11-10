@@ -29,6 +29,7 @@ SOFTWARE.
 #include "Segment.h"
 #include "OpenNICamera.h"
 #include "SimulatorCamera.h"
+#include "DataTypes.h"
 
 class boost::signals2::connection;
 
@@ -42,8 +43,10 @@ private:
     Register<PointT> reg;
     Filter<PointT> filter;
     Segment<PointT> seg;
+    ModelData<PointT> modelData;
     boost::signals2::signal<void (typename pcl::PointCloud<PointT>::CloudVectorType&)> multiCloudSignal;
     boost::signals2::signal<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> singleCloudSignal;
+    boost::signals2::signal<void (typename askinect::ModelData<PointT>)> modelDataSignal;
 
 public:
     CameraT camera;
@@ -55,7 +58,9 @@ public:
         camera.registerCallback(f);
     }
 
-    ~ModelRecorder() {}
+    ~ModelRecorder() {
+    	//delete[] modelData;
+    }
 
     template<typename T>
     boost::signals2::connection registerMultiCloudCallback(const boost::function<T> &callback)
@@ -68,12 +73,22 @@ public:
 		return singleCloudSignal.connect(callback);
 	}
 
+    template<typename T>
+	boost::signals2::connection registerModelDataCallback(const boost::function<T> &callback) {
+		return modelDataSignal.connect(callback);
+	}
+
 
     void capture_cb_(const typename pcl::PointCloud<PointT>::ConstPtr &cloud)
     {
     	pcl::PointCloud<PointT> cloudCopy;
     	pcl::copyPointCloud(*cloud, cloudCopy);
-
+    	//modelData = new ModelData<PointT>(cloud);
+    	std::cout << "MOI" << std::endl;
+    	modelData = ModelData<PointT>();
+    	std::cout << "MOI" << std::endl;
+    	pcl::copyPointCloud(*cloud, modelData.rawCloud);
+    	std::cout << "MOI" << std::endl;
     	singleCloudSignal(cloud);
 
         /*auto calibrated = calibrate(*cloud);
@@ -81,8 +96,11 @@ public:
         auto filteredModel = filter.updateModel(registered);
         auto segmented = segment(filteredModel);
         multiCloudSignal(segmented);*/
-    	auto segmented = seg.segment(cloud);
-    	multiCloudSignal(segmented);
+    	seg.segment(modelData);
+
+    	//multiCloudSignal(segmented);
+    	modelDataSignal(modelData);
+
     }
 
     void start()
