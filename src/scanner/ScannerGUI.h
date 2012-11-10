@@ -191,7 +191,6 @@ public:
 
     void drawBackground()
     {
-    	std::cout << "Drawing BG with " << backgroundCloud->points.size() << " points.\n";
         addOrUpdateBackground(backgroundCloud, std::string("background"));
     }
 
@@ -227,13 +226,11 @@ public:
 
     void updateBackgroundData(pcl::PointCloud<pcl::PointXYZRGBA> cloud)
     {
-    	std::cout << "updating bg data\n";
         pcl::copyPointCloud(cloud, *backgroundCloud);
     }
 
     void updateSegmentData(pcl::PointCloud<pcl::PointXYZRGBA>::CloudVectorType newSegments)
     {
-    	std::cout << "updating segment data\n";
         coloredSegments.clear();
         // make a colored copy of the segments for drawing
         for (unsigned short i = 0; i < newSegments.size(); i++)
