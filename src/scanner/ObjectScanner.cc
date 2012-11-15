@@ -34,7 +34,7 @@ SOFTWARE.
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudType;
 typedef pcl::PointXYZRGBA PointType;
 typedef askinect::OpenNICamera CameraType;
-
+typedef pcl::PointXYZRGB FilePointType;
 
 // TODO: a common superclass for ObjectScanner and ObjectRecognizer. They have a lot incommon:
 // recognizer needs almost all of scanner's member variables and some functions
@@ -46,7 +46,7 @@ template <typename CameraT, typename PointT>
 class ObjectScanner
 {
 private:
-    FileHandler fileHandler;
+    FileHandler<FilePointType> fileHandler;
     ScannerGUI gui;
     ModelRecorder<CameraT, PointT> modelRecorder;
     PointCloudType objectCloud;
@@ -77,7 +77,7 @@ public:
     {
         return gui;
     }
-    FileHandler &getFileHandler()
+    FileHandler<PointT> &getFileHandler()
     {
         return fileHandler;
     }
@@ -88,7 +88,11 @@ public:
 
     void saveObject_cb_(std::string objectName) {
     	std::cout << "OS: Saving object\n";
-    	fileHandler.writePointCloudToFile(objectName, gui.getCurrentCloud());
+    	//convert to XYZRGB
+    	auto currentCloud = gui.getCurrentCloud();
+    	pcl::PointCloud<FilePointType> saveable;
+    	pcl::copyPointCloud(currentCloud, saveable);
+    	fileHandler.writePointCloudToFile(objectName, saveable);
     }
 
     //NOTE: this version of newdata callback is meant for recording data for SimulatorCamera, not actual object scanning

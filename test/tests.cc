@@ -36,8 +36,8 @@ SOFTWARE.
 #include "../src/Segment.h"
 #include "../src/CloudModel.h"
 #include "../src/CloudDB.h"
-#include "../src/Recognize.h"
-#include "../src/RecognizeResults.h"
+#include "../src/recognizer/Recognize.h"
+#include "../src/recognizer/RecognizeResults.h"
 #include "../src/ModelRecorder.h"
 
 void testCalibrate()

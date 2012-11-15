@@ -80,7 +80,7 @@ public:
 
     	pcl::copyPointCloud(*cloud, modelData.rawCloud);
 
-    	//singleCloudSignal(cloud);
+    	singleCloudSignal(cloud);
 
         /*auto calibrated = calibrate(*cloud);
         auto registered = reg.registerNew(calibrated);

@@ -27,6 +27,8 @@ SOFTWARE.
 #include <sensor_msgs/PointCloud2.h>
 namespace askinect
 {
+
+template <typename PointT>
 class FileHandler
 {
 private:
@@ -43,7 +45,16 @@ public:
     /*  Should this take a pointcloud or sensor_msgs::PointCloud2??
      *
      */
-    bool writePointCloudToFile(std::string &filename, pcl::PointCloud<pcl::PointXYZRGB> &cloud)
+    bool writePointCloudToFile(std::string &filename, typename pcl::PointCloud<PointT> &cloud)
+    {
+
+        // copy before writing, in case that reference contents change during the write
+        const pcl::PointCloud<PointT> constCloudCopy = cloud;
+        const std::string completeFilename = targetDirectory + filename;
+        writer.write(completeFilename, constCloudCopy);
+        return true;
+    }
+    /*bool writePointCloudToFile(std::string &filename, typename pcl::PointCloud<pcl::PointXYZRGB> &cloud)
     {
 
         // copy before writing, in case that reference contents change during the write
@@ -51,9 +62,10 @@ public:
         const std::string completeFilename = targetDirectory + filename;
         writer.write(completeFilename, constCloudCopy);
         return true;
-    }
+    }*/
+
     bool loadPointCloudFromFile(
-        const std::string &filename, pcl::PointCloud<pcl::PointXYZRGB> &cloud)
+        const std::string &filename, typename pcl::PointCloud<PointT> &cloud)
     {
         if (reader.read(filename, cloud) == -1)
         {
