@@ -27,39 +27,42 @@ SOFTWARE.
 
 int main ()
 {
-    auto directory = "../../test/data/table_binary/";
+	auto directory = "../../test/data/table_binary/";
 
-    std::cout << "Creating model recorder..." << std::endl;
+	std::cout << "Creating model recorder..." << std::endl;
 
-    askinect::ModelRecorder<askinect::SimulatorCamera<pcl::PointXYZRGB>, pcl::PointXYZRGB> rec;
-    rec.camera.refreshRate = 30;
-    rec.camera.directory = directory;
+	askinect::ModelRecorder<askinect::SimulatorCamera<pcl::PointXYZRGB>, pcl::PointXYZRGB> rec;
+	rec.camera.refreshRate = 30;
+	rec.camera.directory = directory;
 
-    std::cout << "Creating cloud viewer..." << std::endl;
+	std::cout << "Creating cloud viewer..." << std::endl;
 
-    pcl::visualization::CloudViewer v ("Testing table_binary folder");
+	pcl::visualization::CloudViewer v ("Testing table_binary folder");
 
-    std::cout << "Creating lambda function..." << std::endl;
+	std::cout << "Creating lambda function..." << std::endl;
 
-    boost::function<void (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr)> func = [&v] (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr & cloud)
-    {
-      v.showCloud(cloud);
-    };
+	pcl::PointCloud<PointXYZRGB>::Ptr fullCloud (new pcl::PointCloud<PointXYZRGB>);
 
-    std::cout << "Registering lambda function as a callback..." << std::endl;
+	boost::function<void (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr)> func = [&] (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr & cloud)
+	{
+		*fullCloud += *cloud;
+		v.showCloud(fullCloud);
+	};
 
-    rec.registerSingleCloudCallback(func);
+	std::cout << "Registering lambda function as a callback..." << std::endl;
 
-    std::cout << "Starting model recorder..." << std::endl;
+	rec.registerSingleCloudCallback(func);
 
-    rec.start();
+	std::cout << "Starting model recorder..." << std::endl;
 
-    std::cout << "Waiting for viewer stop event..." << std::endl;
+	rec.start();
 
-    while (!v.wasStopped())
-    {}
+	std::cout << "Waiting for viewer stop event..." << std::endl;
 
-    std::cout << "Viewer was stopped, exiting..." << std::endl;
+	while (!v.wasStopped())
+	{}
 
-    return 0;
+	std::cout << "Viewer was stopped, exiting..." << std::endl;
+
+	return 0;
 }

@@ -22,16 +22,31 @@ SOFTWARE.
 
 #pragma once
 #include <iostream>
+#include <string>
 #include <boost/make_shared.hpp>
 #include <pcl/point_cloud.h>
-#include <pcl/registration/icp.h>
-#include <pcl/registration/ia_ransac.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/filter.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/features/fpfh_omp.h>
 #include <pcl/features/normal_3d_omp.h>
+#include <pcl/keypoints/sift_keypoint.h>
+#include <pcl/registration/transformation_estimation_svd.h>
+#include <pcl/registration/correspondence_estimation.h>
+#include <pcl/console/parse.h>
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_representation.h>
 
+#include <pcl/io/pcd_io.h>
+#include <pcl/ros/conversions.h>
+#include <pcl/registration/correspondence_rejection_sample_consensus.h>
+
+using namespace pcl;
+using namespace pcl::io;
+using namespace pcl::console;
+using namespace pcl::registration;
+using namespace pcl::common;
 
 namespace askinect
 {
@@ -40,144 +55,238 @@ template<typename T>
 class Register
 {
 private:
-    pcl::PointCloud<T> previousCloud;
-    bool isInitialized;
+	typename pcl::PointCloud<T>::Ptr previousCloudFiltered;
+	Eigen::Matrix4f cumulativeTransform;
+	bool isInitialized;
 
-    typename pcl::PointCloud<T>::Ptr initialFilter(const pcl::PointCloud<T> &cloud)
-    {
+	////////////////////////////////////////////////////////////////////////////////
+	void
+	estimateKeypoints (typename const PointCloud<T>::Ptr &src,
+					   typename const PointCloud<T>::Ptr &tgt,
+					   const PointCloud<Normal>::Ptr &srcNormals,
+					   const PointCloud<Normal>::Ptr &tgtNormals,
+					   PointCloud<T> &keypoints_src,
+					   PointCloud<T> &keypoints_tgt)
+	{
+		PointCloud<PointWithScale> keypoints_src_scale, keypoints_tgt_scale;
+
+		SIFTKeypoint<T, PointWithScale> sift;
+
+		sift.setScales(0.001, 3, 2);
+		sift.setMinimumContrast(5);
+
+		sift.setInputCloud(src);
+		sift.compute(keypoints_src_scale);
+
+		sift.setInputCloud(tgt);
+		sift.compute(keypoints_tgt_scale);
+
+		copyPointCloud(keypoints_src_scale, keypoints_src);
+		copyPointCloud(keypoints_tgt_scale, keypoints_tgt);
+	}
+
+	////////////////////////////////////////////////////////////////////////////////
+	void
+	estimateNormals (typename const PointCloud<T>::Ptr &src,
+					 typename const PointCloud<T>::Ptr &tgt,
+					 PointCloud<Normal> &normals_src,
+					 PointCloud<Normal> &normals_tgt)
+	{
+		NormalEstimationOMP<T, Normal> normal_est;
+		normal_est.setInputCloud (src);
+		normal_est.setRadiusSearch (0.03);  // 3cm
+		normal_est.compute (normals_src);
+
+		normal_est.setInputCloud (tgt);
+		normal_est.compute (normals_tgt);
+	}
+
+	////////////////////////////////////////////////////////////////////////////////
+	void
+	estimateFPFH (typename const PointCloud<T>::Ptr &src,
+				  typename const PointCloud<T>::Ptr &tgt,
+				  typename const PointCloud<Normal>::Ptr &normals_src,
+				  typename const PointCloud<Normal>::Ptr &normals_tgt,
+				  typename const PointCloud<T>::Ptr &keypoints_src,
+				  typename const PointCloud<T>::Ptr &keypoints_tgt,
+				  PointCloud<FPFHSignature33> &fpfhs_src,
+				  PointCloud<FPFHSignature33> &fpfhs_tgt)
+	{
+		FPFHEstimationOMP<T, Normal, FPFHSignature33> fpfh_est;
+		fpfh_est.setInputCloud (keypoints_src);
+		fpfh_est.setInputNormals (normals_src);
+		fpfh_est.setRadiusSearch (0.06); // 6cm
+		fpfh_est.setSearchSurface (src);
+		fpfh_est.compute (fpfhs_src);
+
+		fpfh_est.setInputCloud (keypoints_tgt);
+		fpfh_est.setInputNormals (normals_tgt);
+		fpfh_est.setSearchSurface (tgt);
+		fpfh_est.compute (fpfhs_tgt);
+	}
+
+	////////////////////////////////////////////////////////////////////////////////
+	void
+	findCorrespondences (const PointCloud<FPFHSignature33>::Ptr &fpfhs_src,
+						 const PointCloud<FPFHSignature33>::Ptr &fpfhs_tgt,
+						 Correspondences &all_correspondences)
+	{
+		CorrespondenceEstimation<FPFHSignature33, FPFHSignature33> est;
+		est.setInputSource (fpfhs_src);
+		est.setInputTarget (fpfhs_tgt);
+		est.determineReciprocalCorrespondences (all_correspondences);
+	}
+
+	////////////////////////////////////////////////////////////////////////////////
+	void
+	rejectBadCorrespondences (const CorrespondencesPtr &all_correspondences,
+							  typename const PointCloud<T>::Ptr &keypoints_src,
+							  typename const PointCloud<T>::Ptr &keypoints_tgt,
+							  Correspondences &remaining_correspondences)
+	{
+		CorrespondenceRejectorSampleConsensus<T> rej;
+		rej.setInputSource (keypoints_src);
+		rej.setInputTarget (keypoints_tgt);
+		rej.setInputCorrespondences (all_correspondences);
+		rej.getCorrespondences (remaining_correspondences);
+	}
+
+
+	////////////////////////////////////////////////////////////////////////////////
+	void
+	computeTransformation (typename const PointCloud<T>::Ptr &src,
+						   typename const PointCloud<T>::Ptr &tgt,
+						   Eigen::Matrix4f &transform,
+						   int &numberOfCorrespondences)
+	{
+		// Compute normals for all points keypoint
+		PointCloud<Normal>::Ptr normals_src (new PointCloud<Normal>),
+				   normals_tgt (new PointCloud<Normal>);
+		estimateNormals (src, tgt, *normals_src, *normals_tgt);
+		print_info ("Estimated %d and %d normals for the source and target datasets.\n", normals_src->points.size (), normals_tgt->points.size ());
+
+		// Get an uniform grid of keypoints
+		typename PointCloud<T>::Ptr keypoints_src (new PointCloud<T>),
+				 keypoints_tgt (new PointCloud<T>);
+
+		estimateKeypoints (src, tgt, normals_src, normals_tgt, *keypoints_src, *keypoints_tgt);
+		print_info ("Found %d and %d keypoints for the source and target datasets.\n", keypoints_src->points.size (), keypoints_tgt->points.size ());
+
+		askinect::FileHandler files("../../test/data/testregister/");
+		files.writePointCloudToFile("keypoints1.pcd", *keypoints_src);
+		files.writePointCloudToFile("keypoints2.pcd", *keypoints_tgt);
+
+		// Compute FPFH features at each keypoint
+		PointCloud<FPFHSignature33>::Ptr fpfhs_src (new PointCloud<FPFHSignature33>),
+				   fpfhs_tgt (new PointCloud<FPFHSignature33>);
+		estimateFPFH (src, tgt, normals_src, normals_tgt, keypoints_src, keypoints_tgt, *fpfhs_src, *fpfhs_tgt);
+
+		// Copy the data and save it to disk
+		/*  PointCloud<PointNormal> s, t;
+		  copyPointCloud<PointXYZ, PointNormal> (*keypoints_src, s);
+		  copyPointCloud<Normal, PointNormal> (normals_src, s);
+		  copyPointCloud<PointXYZ, PointNormal> (*keypoints_tgt, t);
+		  copyPointCloud<Normal, PointNormal> (normals_tgt, t);*/
+
+		// Find correspondences between keypoints in FPFH space
+		CorrespondencesPtr all_correspondences (new Correspondences),
+						   good_correspondences (new Correspondences);
+		findCorrespondences (fpfhs_src, fpfhs_tgt, *all_correspondences);
+
+		// Reject correspondences based on their XYZ distance
+		rejectBadCorrespondences (all_correspondences, keypoints_src, keypoints_tgt, *good_correspondences);
+
+		std::cout << "Found good correspondences: " << good_correspondences->size() << std::endl;
+
+		numberOfCorrespondences = good_correspondences->size();
+
+		// Obtain the best transformation between the two sets of keypoints given the remaining correspondences
+		TransformationEstimationSVD<T, T> trans_est;
+		trans_est.estimateRigidTransformation (*keypoints_src, *keypoints_tgt, *good_correspondences, transform);
+	}
+
+	typename pcl::PointCloud<T>::Ptr initialFilter(const pcl::PointCloud<T> &cloud)
+	{
 
 		// remove nans
-        typename pcl::PointCloud<T>::Ptr filtered(new pcl::PointCloud<T>);
-        std::vector<int> indices;
-        pcl::removeNaNFromPointCloud(cloud, *filtered, indices);
+		typename pcl::PointCloud<T>::Ptr filtered(new pcl::PointCloud<T>);
+		std::vector<int> indices;
+		pcl::removeNaNFromPointCloud(cloud, *filtered, indices);
 
 		// limit z-distance
-        pcl::PassThrough<T> pass;
-        pass.setInputCloud (filtered);
-        pass.setFilterFieldName ("z");
-        pass.setFilterLimits (-1.5, 1.5);
-        pass.filter (*filtered);
+		pcl::PassThrough<T> pass;
+		pass.setInputCloud (filtered);
+		pass.setFilterFieldName ("z");
+		pass.setFilterLimits (-1.5, 1.5);
+		pass.filter (*filtered);
 
 		// down sample
-        pcl::VoxelGrid<T> sor;
-        sor.setInputCloud (filtered);
-        sor.setLeafSize (0.03f, 0.03f, 0.03f);
-        typename pcl::PointCloud<T>::Ptr output(new pcl::PointCloud<T>);
-        sor.filter (*output);
+		pcl::VoxelGrid<T> sor;
+		sor.setInputCloud (filtered);
+		sor.setLeafSize (0.01f, 0.01f, 0.01f);
+		typename pcl::PointCloud<T>::Ptr output(new pcl::PointCloud<T>);
+		sor.filter (*output);
 
-        return output;
-    }
-
-    typename pcl::PointCloud<pcl::Normal>::Ptr getNormals(typename pcl::PointCloud<T>::Ptr cloud)
-    {
-        // Create the normal estimation class, and pass the input dataset to it
-        pcl::NormalEstimation<T, pcl::Normal> ne;
-        ne.setInputCloud (cloud);
-
-        // Create an empty kdtree representation, and pass it to the normal estimation object.
-        // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
-        pcl::search::KdTree<T>::Ptr tree (new pcl::search::KdTree<T> ());
-        ne.setSearchMethod (tree);
-
-        // Output datasets
-        pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
-
-        // Use all neighbors in a sphere of radius 3cm
-        ne.setRadiusSearch (0.03);
-
-        // Compute the features
-        ne.compute (*cloud_normals);
-
-        return cloud_normals;
-    }
-
-    typename const pcl::PointCloud<pcl::FPFHSignature33>::ConstPtr getFeatures(typename pcl::PointCloud<T>::Ptr cloud)
-    {
-        pcl::PointCloud<pcl::Normal>::Ptr normals = getNormals(cloud);
-        pcl::FPFHEstimationOMP<T, pcl::Normal, pcl::FPFHSignature33> fpfh;
-        fpfh.setInputCloud (cloud);
-        fpfh.setInputNormals (normals);
-        pcl::search::KdTree<T>::Ptr tree (new pcl::search::KdTree<T>);
-        fpfh.setSearchMethod (tree);
-        pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfhs (new pcl::PointCloud<pcl::FPFHSignature33> ());
-        fpfh.setRadiusSearch (0.05);
-        fpfh.compute (*fpfhs);
-
-        const pcl::PointCloud<pcl::FPFHSignature33>::ConstPtr returnVal(fpfhs);
-        return returnVal;
-    }
+		return output;
+	}
 
 public:
-    Register() : isInitialized(false) {}
-    ~Register() {}
+	Register() : isInitialized(false) {}
+	~Register() {}
 
-    const pcl::PointCloud<T> &registerNew(const pcl::PointCloud<T> &newCloud)
-    {
-        typename pcl::PointCloud<T>::Ptr filtered = initialFilter(newCloud);
+	const pcl::PointCloud<T> registerNew(const pcl::PointCloud<T> &newCloud)
+	{
+		if (isInitialized)
+		{
+			typename pcl::PointCloud<T>::Ptr filtered = initialFilter(newCloud);
 
-        if (isInitialized)
-        {
-			askinect::FileHandler files("../../test/data/testregister/");
+			// Compute the best transformtion
+			Eigen::Matrix4f transform;
+			int numberOfCorrespondences;
+			computeTransformation (filtered, previousCloudFiltered, transform, numberOfCorrespondences);
 
-			files.writePointCloudToFile("filtered.pcd", *filtered);
+			if (numberOfCorrespondences < 10)
+			{
+				std::cout << "bad frame, skipping it" << std::endl;
+				PointCloud<T> cloud;
+				return cloud;
+			}
 
-            typename pcl::PointCloud<T>::Ptr previousCloudPtr(new pcl::PointCloud<T>);
-            *previousCloudPtr = previousCloud;
+			cumulativeTransform *= transform;
 
-            pcl::SampleConsensusInitialAlignment<T, T, pcl::FPFHSignature33> sac;
+			/*typename PointCloud<T>::Ptr newFiltered (new PointCloud<T>);
+			transformPointCloud(*filtered, *newFiltered, transform);
 
-            std::cout << "Getting features..." << std::endl;
+			IterativeClosestPoint<T, T> icp;
 
-            sac.setInputSource(filtered);
-            sac.setSourceFeatures(getFeatures(filtered));
+			icp.setInputSource(newFiltered);
+			icp.setInputTarget(previousCloudFiltered);
 
-            sac.setInputTarget(previousCloudPtr);
-            sac.setTargetFeatures(getFeatures(previousCloudPtr));
+			PointCloud<T> final;
+			icp.align(final);
 
-            typename pcl::PointCloud<T>::Ptr alignedCloud(new pcl::PointCloud<T>);
+			std::cout << "icp has converged: " << icp.hasConverged() << std::endl;
+			std::cout << "final transformation: " << icp.getFinalTransformation() << std::endl;
 
-            std::cout << "Doing first alignment..." << std::endl;
+			cumulativeTransform *= icp.getFinalTransformation();*/
 
-            sac.align(*alignedCloud);
+			PointCloud<T> returnCloud;
+			transformPointCloud(newCloud, returnCloud, cumulativeTransform);
 
-			files.writePointCloudToFile("first-alignment.pcd", *alignedCloud);
+			previousCloudFiltered = filtered;
 
-            pcl::IterativeClosestPoint<T, T> icp;
+			return returnCloud;
 
-            icp.setInputSource(alignedCloud);
+		}
+		else
+		{
+			previousCloudFiltered = initialFilter(newCloud);
+			cumulativeTransform = Eigen::Matrix4f::Identity();
+			isInitialized = true;
 
-            icp.setInputTarget(previousCloudPtr);
-
-            // Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-            icp.setMaxCorrespondenceDistance (0.2);
-            icp.setRANSACOutlierRejectionThreshold(0.2);
-            // Set the maximum number of iterations (criterion 1)
-            icp.setMaximumIterations (50);
-            // Set the transformation epsilon (criterion 2)
-            icp.setTransformationEpsilon (1e-8);
-            // Set the euclidean distance difference epsilon (criterion 3)
-            icp.setEuclideanFitnessEpsilon (10);
-
-            pcl::PointCloud<T> alignedCloud2;
-
-            std::cout << "Doing ICP..." << std::endl;
-
-            icp.align(alignedCloud2);
-
-            std::cout << "has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore() << std::endl;
-            std::cout << icp.getFinalTransformation() << std::endl;
-
-            previousCloud = alignedCloud2;
-
-        }
-        else
-        {
-            previousCloud = *filtered;
-            isInitialized = true;
-        }
-
-        return previousCloud;
-    }
+			return newCloud;
+		}
+	}
 };
 
 }
