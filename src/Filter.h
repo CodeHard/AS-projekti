@@ -22,6 +22,8 @@ SOFTWARE.
 
 #pragma once
 #include <pcl/point_cloud.h>
+#include <pcl/filters/filter.h>
+#include <pcl/filters/passthrough.h>
 
 namespace askinect
 {
@@ -30,17 +32,27 @@ template<typename T>
 class Filter
 {
 private:
-    pcl::PointCloud<T> model;
+	typename pcl::PointCloud<T>::Ptr model;
 
 public:
-    Filter() {}
-    ~Filter() {}
+	Filter() : model(new pcl::PointCloud<T>) {}
+	~Filter() {}
 
-    const pcl::PointCloud<T> &updateModel(const pcl::PointCloud<T> &new_cloud)
-    {
-        model = new_cloud;
-        return model;
-    }
+	const pcl::PointCloud<T> updateModel(const pcl::PointCloud<T> &new_cloud)
+	{
+		*model += new_cloud;
+
+		// down sample
+		pcl::VoxelGrid<T> sor;
+		pcl::PointCloud<T> result;
+		sor.setInputCloud (model);
+		sor.setLeafSize (0.01f, 0.01f, 0.01f);
+		sor.filter (result);
+
+		*model = result;
+
+		return *model;
+	}
 };
 
 }

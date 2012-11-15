@@ -115,7 +115,7 @@ private:
 		FPFHEstimationOMP<T, Normal, FPFHSignature33> fpfh_est;
 		fpfh_est.setInputCloud (keypoints_src);
 		fpfh_est.setInputNormals (normals_src);
-		fpfh_est.setRadiusSearch (0.06); // 6cm
+		fpfh_est.setRadiusSearch (0.1); // 6cm
 		fpfh_est.setSearchSurface (src);
 		fpfh_est.compute (fpfhs_src);
 
@@ -223,7 +223,7 @@ private:
 		// down sample
 		pcl::VoxelGrid<T> sor;
 		sor.setInputCloud (filtered);
-		sor.setLeafSize (0.01f, 0.01f, 0.01f);
+		sor.setLeafSize (0.005f, 0.005f, 0.005f);
 		typename pcl::PointCloud<T>::Ptr output(new pcl::PointCloud<T>);
 		sor.filter (*output);
 
@@ -245,7 +245,7 @@ public:
 			int numberOfCorrespondences;
 			computeTransformation (filtered, previousCloudFiltered, transform, numberOfCorrespondences);
 
-			if (numberOfCorrespondences < 10)
+			if (numberOfCorrespondences < 20)
 			{
 				std::cout << "bad frame, skipping it" << std::endl;
 				PointCloud<T> cloud;

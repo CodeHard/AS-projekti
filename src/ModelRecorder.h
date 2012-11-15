@@ -40,63 +40,69 @@ template<typename CameraT, typename PointT>
 class ModelRecorder
 {
 private:
-    Register<PointT> reg;
-    Filter<PointT> filter;
-    Segment<PointT> seg;
-    ModelData<PointT> modelData;
-    boost::signals2::signal<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> singleCloudSignal;
-    boost::signals2::signal<void (typename askinect::ModelData<PointT>)> modelDataSignal;
+	Register<PointT> reg;
+	Filter<PointT> filter;
+	Segment<PointT> seg;
+	ModelData<PointT> modelData;
+	boost::signals2::signal<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> singleCloudSignal;
+	boost::signals2::signal<void (typename askinect::ModelData<PointT>)> modelDataSignal;
 
 public:
-    CameraT camera;
+	CameraT camera;
 
-    ModelRecorder()
-    {
-        boost::function<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> f =
-            boost::bind (&ModelRecorder::capture_cb_, this, _1);
-        camera.registerCallback(f);
-    }
+	ModelRecorder()
+	{
+		boost::function<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> f =
+			boost::bind (&ModelRecorder::capture_cb_, this, _1);
+		camera.registerCallback(f);
+	}
 
-    ~ModelRecorder() {}
+	~ModelRecorder() {}
 
-    template<typename T>
+	template<typename T>
 	boost::signals2::connection registerSingleCloudCallback(const boost::function<T> &callback) {
 		return singleCloudSignal.connect(callback);
 	}
 
-    template<typename T>
+	template<typename T>
 	boost::signals2::connection registerModelDataCallback(const boost::function<T> &callback) {
 		return modelDataSignal.connect(callback);
 	}
 
 
-    void capture_cb_(const typename pcl::PointCloud<PointT>::ConstPtr &cloud)
-    {
-    	pcl::PointCloud<PointT> cloudCopy;
-    	pcl::copyPointCloud(*cloud, cloudCopy);
+	void capture_cb_(const typename pcl::PointCloud<PointT>::ConstPtr &cloud)
+	{
+		pcl::PointCloud<PointT> cloudCopy;
+		pcl::copyPointCloud(*cloud, cloudCopy);
 
-    	// all data is collected to this struct and then sent to ObjectScanner -> GUI via signals
-    	modelData = ModelData<PointT>();
+		// all data is collected to this struct and then sent to ObjectScanner -> GUI via signals
+		modelData = ModelData<PointT>();
 
-    	pcl::copyPointCloud(*cloud, modelData.rawCloud);
+		pcl::copyPointCloud(*cloud, modelData.rawCloud);
 
-    	singleCloudSignal(boost::make_shared<const pcl::PointCloud<PointT> >(reg.registerNew(*cloud)));
+		auto registered = reg.registerNew(*cloud);
+		if (registered.size() > 0)
+		{
+			std::cout << "updating model..." << std::endl;
+			auto filteredModel = filter.updateModel(registered);
+			singleCloudSignal(boost::make_shared<const pcl::PointCloud<PointT> >(filteredModel));
+		}
+		else
+		{
+			// registration failed
+		}
+		/*auto segmented = segment(filteredModel);
+		multiCloudSignal(segmented);*/
+		//seg.segment(modelData);
 
-        /*auto calibrated = calibrate(*cloud);
-        auto registered = reg.registerNew(calibrated);
-        auto filteredModel = filter.updateModel(registered);
-        auto segmented = segment(filteredModel);
-        multiCloudSignal(segmented);*/
-    	//seg.segment(modelData);
+		modelDataSignal(modelData);
 
-    	modelDataSignal(modelData);
+	}
 
-    }
-
-    void start()
-    {
-        camera.start();
-    }
+	void start()
+	{
+		camera.start();
+	}
 };
 
 }

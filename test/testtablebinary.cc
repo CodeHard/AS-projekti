@@ -41,12 +41,9 @@ int main ()
 
 	std::cout << "Creating lambda function..." << std::endl;
 
-	pcl::PointCloud<PointXYZRGB>::Ptr fullCloud (new pcl::PointCloud<PointXYZRGB>);
-
-	boost::function<void (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr)> func = [&] (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr & cloud)
+	boost::function<void (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr)> func = [&v] (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr & cloud)
 	{
-		*fullCloud += *cloud;
-		v.showCloud(fullCloud);
+		v.showCloud(cloud);
 	};
 
 	std::cout << "Registering lambda function as a callback..." << std::endl;

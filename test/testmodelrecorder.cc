@@ -20,10 +20,43 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "OpenNICamera.h"
+#include <iostream>
+#include <pcl/point_types.h>
+#include <pcl/visualization/cloud_viewer.h>
+#include "../src/ModelRecorder.h"
+#include "../src/OpenNICamera.h"
 
-namespace askinect
+int main ()
 {
+  std::cout << "Creating model recorder..." << std::endl;
 
+  askinect::ModelRecorder<askinect::OpenNICamera, pcl::PointXYZRGB> rec;
 
+  std::cout << "Creating cloud viewer..." << std::endl;
+
+  pcl::visualization::CloudViewer v ("Testing table_binary folder");
+
+  std::cout << "Creating lambda function..." << std::endl;
+
+  boost::function<void (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr)> func = [&v] (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr & cloud)
+  {
+    v.showCloud(cloud);
+  };
+
+  std::cout << "Registering lambda function as a callback..." << std::endl;
+
+  rec.registerSingleCloudCallback(func);
+
+  std::cout << "Starting model recorder..." << std::endl;
+
+  rec.start();
+
+  std::cout << "Waiting for viewer stop event..." << std::endl;
+
+  while (!v.wasStopped())
+  {}
+
+  std::cout << "Viewer was stopped, exiting..." << std::endl;
+
+  return 0;
 }
