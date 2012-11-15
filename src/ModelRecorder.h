@@ -80,14 +80,14 @@ public:
 
     	pcl::copyPointCloud(*cloud, modelData.rawCloud);
 
-    	//singleCloudSignal(cloud);
+    	singleCloudSignal(boost::make_shared<const pcl::PointCloud<PointT> >(reg.registerNew(*cloud)));
 
         /*auto calibrated = calibrate(*cloud);
         auto registered = reg.registerNew(calibrated);
         auto filteredModel = filter.updateModel(registered);
         auto segmented = segment(filteredModel);
         multiCloudSignal(segmented);*/
-    	seg.segment(modelData);
+    	//seg.segment(modelData);
 
     	modelDataSignal(modelData);
 

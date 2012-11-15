@@ -5,6 +5,9 @@
 #..except source and some other stuff
 !/src/
 !/test/
+# ignore large test data
+/test/data/table_binary*/
+
 */CMakeFiles
 */cmake_install.cmake
 */*~
