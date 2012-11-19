@@ -46,99 +46,106 @@ template <typename CameraT, typename PointT>
 class ObjectScanner
 {
 private:
-    FileHandler<FilePointType> fileHandler;
-    ScannerGUI gui;
-    ModelRecorder<CameraT, PointT> modelRecorder;
-    PointCloudType objectCloud;
-    unsigned int frameCounter;
+	FileHandler<FilePointType> fileHandler;
+	ScannerGUI gui;
+	ModelRecorder<CameraT, PointT> modelRecorder;
+	PointCloudType objectCloud;
+	unsigned int frameCounter;
 public:
-    ObjectScanner(std::string outputFolder) :
-        fileHandler(outputFolder),
-        gui(),
-        modelRecorder(),
-        frameCounter(0)
-    {
-    	boost::function<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> f =
-    	            boost::bind (&ObjectScanner::newBackground_cb_, this, _1);
-    	modelRecorder.registerSingleCloudCallback(f);
+	ObjectScanner(std::string outputFolder) :
+		fileHandler(outputFolder),
+		gui(),
+		modelRecorder(),
+		frameCounter(0)
+	{
+		boost::function<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> f =
+					boost::bind (&ObjectScanner::newBackground_cb_, this, _1);
+		modelRecorder.registerSingleCloudCallback(f);
 
-    	boost::function<void (typename askinect::ModelData<PointT>)> f2 =
-    	    	    	            boost::bind (&ObjectScanner::modelData_cb_, this, _1);
-    	modelRecorder.registerModelDataCallback(f2);
+		boost::function<void (typename askinect::ModelData<PointT>)> f2 =
+									boost::bind (&ObjectScanner::modelData_cb_, this, _1);
+		modelRecorder.registerModelDataCallback(f2);
 
-    	boost::function<void (std::string)> f3 =
-    	            boost::bind (&ObjectScanner::saveObject_cb_, this, _1);
-    	gui.registerSaveObjectCallback(f3);
+		boost::function<void (std::string)> f3 =
+					boost::bind (&ObjectScanner::saveObject_cb_, this, _1);
+		gui.registerSaveObjectCallback(f3);
 
 
-    }
+	}
 
-    ScannerGUI &getGUI()
-    {
-        return gui;
-    }
-    FileHandler<PointT> &getFileHandler()
-    {
-        return fileHandler;
-    }
-    void init()
-    {
-        modelRecorder.start();
-    }
+	ScannerGUI &getGUI()
+	{
+		return gui;
+	}
+	FileHandler<PointT> &getFileHandler()
+	{
+		return fileHandler;
+	}
+	void init()
+	{
+		modelRecorder.start();
+	}
 
-    void saveObject_cb_(std::string objectName) {
-    	std::cout << "OS: Saving object\n";
-    	//convert to XYZRGB
-    	auto currentCloud = gui.getCurrentCloud();
-    	pcl::PointCloud<FilePointType> saveable;
-    	pcl::copyPointCloud(currentCloud, saveable);
-    	fileHandler.writePointCloudToFile(objectName, saveable);
-    }
+	void saveObject_cb_(std::string objectName) {
+		std::cout << "OS: Saving object\n";
+		//convert to XYZRGB
+		auto currentCloud = gui.getCurrentCloud();
+		pcl::PointCloud<FilePointType> saveable;
+		pcl::copyPointCloud(currentCloud, saveable);
+		fileHandler.writePointCloudToFile(objectName, saveable);
+	}
 
-    //NOTE: this version of newdata callback is meant for recording data for SimulatorCamera, not actual object scanning
-    void record_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
-    	// show single cloud
-    	//gui.drawRawData(cloud);
-    	std::stringstream file_name;
+	//NOTE: this version of newdata callback is meant for recording data for SimulatorCamera, not actual object scanning
+	void record_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
+		// show single cloud
+		//gui.drawRawData(cloud);
+		std::stringstream file_name;
 		file_name << "frame";
 		file_name.fill('0');
 		file_name.width(4);
 		file_name << frameCounter++ << ".pcd";
 		std::cout << file_name.str() << std::endl;
 		fileHandler.writePointCloudToFile(file_name.str(), cloud);
-    }
+	}
 
-    void newBackground_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
-    	gui.updateBackgroundData(cloud);
-    }
+	void newBackground_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
+		gui.updateBackgroundData(cloud);
+	}
 
-    void modelData_cb_ ( typename askinect::ModelData<PointT> model) {
+	void modelData_cb_ ( typename askinect::ModelData<PointT> model) {
+		std::cout << "got new data!" << std::endl;
 		if (!model.segments.empty()) {
+			std::cout << "data got segments!" << std::endl;
 			if(gui.wantsData()) {
-				gui.clearViewer();
-				gui.updateBackgroundData(model.rawCloud);
-				gui.updateSegmentData(model.segments);
-				gui.drawAll();
-				gui.drawAll();
-				gui.gotData();
+				std::cout << "gui wants some data!" << std::endl;
+				gui.addNewModel(model);
+			}
+			else
+			{
+				modelRecorder.stop();
 			}
 		}
-    }
+	}
 
-    /* \brief This function is possibly not needed
-     *
-     */
-    void run()
-    {
-        while (gui.running())
-        {
-            // main loop is empty, as cloud data is routed directly to ScannerGUI::update(), by boost signals
-            boost::this_thread::sleep(boost::posix_time::milliseconds (5));
+	/* \brief This function is possibly not needed
+	 *
+	 */
+	void run()
+	{
+		while (gui.running())
+		{
+			// main loop is empty, as cloud data is routed directly to ScannerGUI::update(), by boost signals
+			boost::this_thread::sleep(boost::posix_time::milliseconds (5));
 
-        	gui.update();
+			gui.update();
 
-        }
-    }
+			if (gui.wantsData())
+			{
+				modelRecorder.start();
+			}
+
+		}
+	}
 };
 
 }
@@ -153,8 +160,8 @@ int main(int argc, char* argv[])
 
 	std::cout << "Output folder: " << outputFolder << std::endl;
 
-    askinect::ObjectScanner<CameraType, PointType> scanner(outputFolder);
-    scanner.init();
-    scanner.run();
-    return 0;
+	askinect::ObjectScanner<CameraType, PointType> scanner(outputFolder);
+	scanner.init();
+	scanner.run();
+	return 0;
 }

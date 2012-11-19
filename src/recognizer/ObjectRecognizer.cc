@@ -52,85 +52,85 @@ class ObjectRecognizer
 {
 private:
 	DatabaseReader<FilePointType> dbReader;
-    RecognizerGUI gui;
-    ModelRecorder<CameraT, PointT> modelRecorder;
-    PointCloudType scene;
-    PointCloudType objectCloud;
-    unsigned int frameCounter;
+	RecognizerGUI gui;
+	ModelRecorder<CameraT, PointT> modelRecorder;
+	PointCloudType scene;
+	PointCloudType objectCloud;
+	unsigned int frameCounter;
 public:
-    ObjectRecognizer(std::string inputFolder) :
-        //fileHandler(outputFolder),
-    	dbReader(inputFolder),
-        gui(),
-        modelRecorder(),
-        frameCounter(0)
-    {
-    	boost::function<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> f =
-    	            boost::bind (&ObjectRecognizer::newBackground_cb_, this, _1);
-    	modelRecorder.registerSingleCloudCallback(f);
+	ObjectRecognizer(std::string inputFolder) :
+		//fileHandler(outputFolder),
+		dbReader(inputFolder),
+		gui(),
+		modelRecorder(),
+		frameCounter(0)
+	{
+		boost::function<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> f =
+					boost::bind (&ObjectRecognizer::newBackground_cb_, this, _1);
+		modelRecorder.registerSingleCloudCallback(f);
 
-    	boost::function<void (typename askinect::ModelData<PointT>)> f2 =
-    	    	    	            boost::bind (&ObjectRecognizer::modelData_cb_, this, _1);
-    	modelRecorder.registerModelDataCallback(f2);
+		boost::function<void (typename askinect::ModelData<PointT>)> f2 =
+									boost::bind (&ObjectRecognizer::modelData_cb_, this, _1);
+		modelRecorder.registerModelDataCallback(f2);
 
-    	boost::function<void (std::string)> f3 =
-    	            boost::bind (&ObjectRecognizer::recognize_cb_, this, _1);
-    	gui.registerSaveObjectCallback(f3);
-
-
-    }
-
-    RecognizerGUI &getGUI()
-    {
-        return gui;
-    }
-    DatabaseReader<PointT> &getDBReader()
-    {
-        return dbReader;
-    }
-    void init()
-    {
-        modelRecorder.start();
-        dbReader.loadFiles();
-        std::cout << "files loaded" << std::endl;
-    }
-
-    void recognize_cb_(std::string turha) {
-    	std::cout << "Loading files\n";
-    	//boost::ptr_vector <pcl::PointCloud<FilePointType> >& refModels = dbReader.getModels();
-    	auto refModels = dbReader.getModels();
-
-    	// recognize from scene
-    	//recognize(refModels, scene);
-
-    	// recognize from pre-selected segment
-    	recognize(refModels, gui.getCurrentCloud());
+		boost::function<void (std::string)> f3 =
+					boost::bind (&ObjectRecognizer::recognize_cb_, this, _1);
+		gui.registerSaveObjectCallback(f3);
 
 
+	}
+
+	RecognizerGUI &getGUI()
+	{
+		return gui;
+	}
+	DatabaseReader<PointT> &getDBReader()
+	{
+		return dbReader;
+	}
+	void init()
+	{
+		modelRecorder.start();
+		dbReader.loadFiles();
+		std::cout << "files loaded" << std::endl;
+	}
+
+	void recognize_cb_(std::string turha) {
+		std::cout << "Loading files\n";
+		//boost::ptr_vector <pcl::PointCloud<FilePointType> >& refModels = dbReader.getModels();
+		auto refModels = dbReader.getModels();
+
+		// recognize from scene
+		//recognize(refModels, scene);
+
+		// recognize from pre-selected segment
+		recognize(refModels, gui.getCurrentCloud());
 
 
-    	//fileHandler.writePointCloudToFile(objectName, gui.getCurrentCloud());
-    }
 
-    //NOTE: this version of newdata callback is meant for recording data for SimulatorCamera, not actual object scanning
-    void record_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
-    	// show single cloud
-    	//gui.drawRawData(cloud);
-    	std::stringstream file_name;
+
+		//fileHandler.writePointCloudToFile(objectName, gui.getCurrentCloud());
+	}
+
+	//NOTE: this version of newdata callback is meant for recording data for SimulatorCamera, not actual object scanning
+	void record_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
+		// show single cloud
+		//gui.drawRawData(cloud);
+		std::stringstream file_name;
 		file_name << "frame";
 		file_name.fill('0');
 		file_name.width(4);
 		file_name << frameCounter++ << ".pcd";
 		std::cout << file_name.str() << std::endl;
 		//fileHandler.writePointCloudToFile(file_name.str(), cloud);
-    }
+	}
 
-    void newBackground_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
-    	pcl::copyPointCloud(*cloud, scene);
-    	//gui.updateBackgroundData(cloud);
-    }
+	void newBackground_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
+		pcl::copyPointCloud(*cloud, scene);
+		//gui.updateBackgroundData(cloud);
+	}
 
-    void modelData_cb_ ( typename askinect::ModelData<PointT> model) {
+	void modelData_cb_ ( typename askinect::ModelData<PointT> model) {
 		if (!model.segments.empty()) {
 			if(gui.wantsData()) {
 				gui.clearViewer();
@@ -141,22 +141,22 @@ public:
 				gui.gotData();
 			}
 		}
-    }
+	}
 
-    /* \brief This function is possibly not needed
-     *
-     */
-    void run()
-    {
-        while (gui.running())
-        {
-            // main loop is empty, as cloud data is routed directly to RecognizerGUI::update(), by boost signals
-            boost::this_thread::sleep(boost::posix_time::milliseconds (5));
+	/* \brief This function is possibly not needed
+	 *
+	 */
+	void run()
+	{
+		while (gui.running())
+		{
+			// main loop is empty, as cloud data is routed directly to RecognizerGUI::update(), by boost signals
+			boost::this_thread::sleep(boost::posix_time::milliseconds (5));
 
-        	gui.update();
+			gui.update();
 
-        }
-    }
+		}
+	}
 };
 
 }
@@ -171,8 +171,8 @@ int main(int argc, char* argv[])
 
 	std::cout << "Output folder: " << inputFolder << std::endl;
 
-    askinect::ObjectRecognizer<CameraType, PointType> recognizer(inputFolder);
-    recognizer.init();
-    recognizer.run();
-    return 0;
+	askinect::ObjectRecognizer<CameraType, PointType> recognizer(inputFolder);
+	recognizer.init();
+	recognizer.run();
+	return 0;
 }

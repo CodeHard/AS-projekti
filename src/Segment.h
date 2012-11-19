@@ -52,14 +52,14 @@ template<typename PointT>
 class Segment
 {
 private:
-    typename pcl::PointCloud<PointT> cloudCopy;
-    typename pcl::PointCloud<PointT>::CloudVectorType segments;
+	typename pcl::PointCloud<PointT> cloudCopy;
+	typename pcl::PointCloud<PointT>::CloudVectorType segments;
 	pcl::SACSegmentation<PointT> seg;
 	pcl::ModelCoefficients::Ptr coefficients;
 	pcl::PointIndices::Ptr inliers;
 public:
-    Segment() : coefficients (new pcl::ModelCoefficients), inliers (new pcl::PointIndices)
-    {
+	Segment() : coefficients (new pcl::ModelCoefficients), inliers (new pcl::PointIndices)
+	{
 		// Optional
 		seg.setOptimizeCoefficients (true);
 		// Mandatory
@@ -71,14 +71,14 @@ public:
 		//assume 45 +- 40deg imaging angle - this is to limit the found planes to horizontal surfaces, for example walls would not count
 		//seg.setAxis(Eigen::Vector3f(0, -1, -1));
 		//seg.setEpsAngle(pcl::deg2rad(40.0f));
-    }
-    ~Segment() {}
+	}
+	~Segment() {}
 
-    pcl::ExtractIndices<PointT> findSurface (typename askinect::ModelData<PointT>& model) {
+	pcl::ExtractIndices<PointT> findSurface (typename askinect::ModelData<PointT>& model) {
 
-    	pcl::copyPointCloud(model.rawCloud, cloudCopy);
+		pcl::copyPointCloud(model.rawCloud, cloudCopy);
 
-    	seg.setInputCloud(cloudCopy.makeShared());
+		seg.setInputCloud(cloudCopy.makeShared());
 		seg.setInputCloud(cloudCopy.makeShared());
 		seg.segment(*inliers, *coefficients);
 		if (inliers->indices.size() == 0) {
@@ -97,13 +97,13 @@ public:
 		extract.filter(model.surface);
 
 		return extract;
-    }
+	}
 
-    /* 1. Find table surface plane and place it in model.surface
-     * 2. Calculate a convex hull (box above the table), where objects on the table are located
-     * 3. Cluster the objects in the convex hull
-     * 4. Save clusters to model.segments
-     */
+	/* 1. Find table surface plane and place it in model.surface
+	 * 2. Calculate a convex hull (box above the table), where objects on the table are located
+	 * 3. Cluster the objects in the convex hull
+	 * 4. Save clusters to model.segments
+	 */
 	void segment( typename askinect::ModelData<PointT>& model ) {
 		model.segments.clear();
 		pcl::copyPointCloud(model.rawCloud, cloudCopy);
@@ -145,30 +145,23 @@ public:
 		ex2.setNegative(false);
 		ex2.filter(*xyzCopy);
 
-		/////// 3. Cluster the objects in the convex hull ///////
-		// Creating the KdTree object for the search method of the extraction
-		pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(
-				new pcl::search::KdTree<pcl::PointXYZ>);
-		tree->setInputCloud(xyzCopy);
-
 		std::vector<pcl::PointIndices> cluster_indices;
 		pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
 		ec.setClusterTolerance(0.02); // 2cm
 		ec.setMinClusterSize(800);
 		ec.setMaxClusterSize(25000);
-		ec.setSearchMethod(tree);
 		ec.setInputCloud(xyzCopy);
 		ec.extract(cluster_indices);
 
 		int j = 0;
 		for (std::vector<pcl::PointIndices>::const_iterator it =
 				cluster_indices.begin(); it != cluster_indices.end(); ++it) {
-		    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
-		    for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); pit++)
-		      cloud_cluster->points.push_back (xyzCopy->points[*pit]); //*
-		    cloud_cluster->width = cloud_cluster->points.size ();
-		    cloud_cluster->height = 1;
-		    cloud_cluster->is_dense = true;
+			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+			for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); pit++)
+			  cloud_cluster->points.push_back (xyzCopy->points[*pit]); //*
+			cloud_cluster->width = cloud_cluster->points.size ();
+			cloud_cluster->height = 1;
+			cloud_cluster->is_dense = true;
 
 			//std::cout << "PointCloud representing the Cluster: "
 			//		<< cloud_cluster->points.size() << " data points."
