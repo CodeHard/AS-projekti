@@ -78,9 +78,10 @@ public:
 		// all data is collected to this struct and then sent to ObjectScanner -> GUI via signals
 		modelData = ModelData<PointT>();
 
-		pcl::copyPointCloud(*cloud, modelData.rawCloud);
+		std::vector<int> indices;
+		pcl::removeNaNFromPointCloud(*cloud, modelData.rawCloud, indices);
 
-		auto registered = reg.registerNew(*cloud);
+		/*auto registered = reg.registerNew(*cloud);
 		if (registered.size() > 0)
 		{
 			std::cout << "updating model..." << std::endl;
@@ -93,7 +94,7 @@ public:
 		}
 		/*auto segmented = segment(filteredModel);
 		multiCloudSignal(segmented);*/
-		//seg.segment(modelData);
+		seg.segment(modelData);
 
 		modelDataSignal(modelData);
 
