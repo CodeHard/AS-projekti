@@ -29,12 +29,12 @@ SOFTWARE.
 #include <boost/signals2/signal.hpp>
 
 class boost::signals2::connection;
-//class ObjectScanner;
+//class ObjectRecognizer;
 
 namespace askinect
 {
 
-class ScannerGUI
+class RecognizerGUI
 {
 private:
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
@@ -48,7 +48,7 @@ private:
 	bool gotNewModel;
 public:
 
-	ScannerGUI() : viewer(new pcl::visualization::PCLVisualizer("Object scanner")),
+	RecognizerGUI() : viewer(new pcl::visualization::PCLVisualizer("Object recognizer")),
 		coloredSegments(),
 		colorHandlers(),
 		backgroundCloud(new pcl::PointCloud<pcl::PointXYZRGB>),
@@ -57,7 +57,7 @@ public:
 		gotNewModel(false)
 	{
 		boost::function<void (const pcl::visualization::KeyboardEvent &)> f =
-			boost::bind (&ScannerGUI::keyboardCallback, this, _1);
+			boost::bind (&RecognizerGUI::keyboardCallback, this, _1);
 		viewer->registerKeyboardCallback(f);
 
 
@@ -73,10 +73,9 @@ public:
 		newModel = model;
 		gotData();
 		gotNewModel = true;
-		std::cout << "added new model, gotNewModel is true!" << std::endl;
 	}
 
-	~ScannerGUI()
+	~RecognizerGUI()
 	{
 	}
 
@@ -91,8 +90,7 @@ public:
 		if (event.getKeySym() == "s" && event.keyDown())
 		{
 			std::string objectName;
-			std::cout << "Saving, please enter object name:" << std::endl;
-			std::cin >> objectName;
+			std::cout << "Recognizing this segment" << std::endl;
 			saveObjectSignal(objectName);
 
 		}
@@ -142,7 +140,6 @@ public:
 		viewer->spinOnce();
 		if (gotNewModel)
 		{
-			std::cout << "gui got new model!" << std::endl;
 			clearViewer();
 			updateBackgroundData(newModel.rawCloud);
 			updateSegmentData(newModel.segments);

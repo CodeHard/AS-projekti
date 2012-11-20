@@ -104,6 +104,11 @@ public:
 	{
 		camera.start();
 	}
+
+	void stop()
+	{
+		camera.stop();
+	}
 };
 
 }

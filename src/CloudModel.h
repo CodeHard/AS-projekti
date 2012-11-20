@@ -37,11 +37,7 @@ private:
 public:
     CloudModel() {}
 
-    CloudModel(std::string id, pcl::PointCloud<T> cloud)
-    {
-        id = id;
-        cloud = cloud;
-    }
+    CloudModel(std::string id, pcl::PointCloud<T> cloud) : id(id), cloud(cloud) {}
 
     ~CloudModel() {}
 

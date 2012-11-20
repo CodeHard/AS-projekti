@@ -27,6 +27,8 @@ SOFTWARE.
 #include <sensor_msgs/PointCloud2.h>
 namespace askinect
 {
+
+template <typename PointT>
 class FileHandler
 {
 private:
@@ -40,32 +42,37 @@ public:
 		reader = pcl::PCDReader();
 	}
 
-	/*  Should this take a pointcloud or sensor_msgs::PointCloud2??
-	 *
-	 */
-	template <typename PointT>
-	bool writePointCloudToFile(const std::string &filename, pcl::PointCloud<PointT> &cloud)
-	{
+    /*  Should this take a pointcloud or sensor_msgs::PointCloud2??
+     *
+     */
+    bool writePointCloudToFile(std::string &filename, typename pcl::PointCloud<PointT> &cloud)
+    {
 
-		// copy before writing, in case that reference contents change during the write
-		const pcl::PointCloud<PointT> constCloudCopy = cloud;
-		const std::string completeFilename = targetDirectory + filename;
-		writer.write(completeFilename, constCloudCopy);
-		return true;
-	}
+        // copy before writing, in case that reference contents change during the write
+        const pcl::PointCloud<PointT> constCloudCopy = cloud;
+        const std::string completeFilename = targetDirectory + filename;
+        writer.write(completeFilename, constCloudCopy);
+        return true;
+    }
+    /*bool writePointCloudToFile(std::string &filename, typename pcl::PointCloud<pcl::PointXYZRGB> &cloud)
+    {
 
-	template <typename PointT>
-	bool loadPointCloudFromFile(
-		const std::string &filename, pcl::PointCloud<PointT> &cloud)
-	{
-		if (pcl::io::loadPCDFile<PointT> (targetDirectory + filename, cloud) == -1)
-		{
-			PCL_ERROR("Couldn't load file.\n");
-			return false;
-		}
-		return true;
-	}
+        // copy before writing, in case that reference contents change during the write
+        const pcl::PointCloud<pcl::PointXYZRGB> constCloudCopy = cloud;
+        const std::string completeFilename = targetDirectory + filename;
+        writer.write(completeFilename, constCloudCopy);
+        return true;
+    }*/
 
-
+    bool loadPointCloudFromFile(
+        const std::string &filename, typename pcl::PointCloud<PointT> &cloud)
+    {
+        if (reader.read(filename, cloud) == -1)
+        {
+            PCL_ERROR("Couldn't load file.\n");
+            return false;
+        }
+        return true;
+    }
 };
 }

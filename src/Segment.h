@@ -145,18 +145,11 @@ public:
 		ex2.setNegative(false);
 		ex2.filter(*xyzCopy);
 
-		/////// 3. Cluster the objects in the convex hull ///////
-		// Creating the KdTree object for the search method of the extraction
-		pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(
-				new pcl::search::KdTree<pcl::PointXYZ>);
-		tree->setInputCloud(xyzCopy);
-
 		std::vector<pcl::PointIndices> cluster_indices;
 		pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
 		ec.setClusterTolerance(0.02); // 2cm
 		ec.setMinClusterSize(800);
 		ec.setMaxClusterSize(25000);
-		ec.setSearchMethod(tree);
 		ec.setInputCloud(xyzCopy);
 		ec.extract(cluster_indices);
 
