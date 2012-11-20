@@ -133,12 +133,11 @@ public:
 	void modelData_cb_ ( typename askinect::ModelData<PointT> model) {
 		if (!model.segments.empty()) {
 			if(gui.wantsData()) {
-				gui.clearViewer();
-				gui.updateBackgroundData(model.rawCloud);
-				gui.updateSegmentData(model.segments);
-				gui.drawAll();
-				gui.drawAll();
-				gui.gotData();
+				gui.addNewModel(model);
+			}
+			else
+			{
+				modelRecorder.stop();
 			}
 		}
 	}
@@ -155,6 +154,11 @@ public:
 
 			gui.update();
 
+			if (gui.wantsData())
+			{
+				modelRecorder.start();
+			}
+
 		}
 	}
 };
@@ -165,7 +169,7 @@ public:
 int main(int argc, char* argv[])
 {
 	std::cout << "argc = " << argc << ", argv = " << *argv << endl;
-	std::string inputFolder = "/home/tommi/Desktop/AS-projekti/ObjectModels/";
+	std::string inputFolder = "../../models/";
 	if(argc > 1)
 		inputFolder = argv[1];
 

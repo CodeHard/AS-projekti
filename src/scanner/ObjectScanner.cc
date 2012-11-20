@@ -90,9 +90,12 @@ public:
 		std::cout << "OS: Saving object\n";
 		//convert to XYZRGB
 		auto currentCloud = gui.getCurrentCloud();
+		std::cout << "got cloud with points: " << currentCloud.size() << std::endl;
 		pcl::PointCloud<FilePointType> saveable;
 		pcl::copyPointCloud(currentCloud, saveable);
+		std::cout << "saving cloud with points: " << saveablesize() << std::endl;
 		fileHandler.writePointCloudToFile(objectName, saveable);
+		std::cout << "saved cloud" << std::endl;
 	}
 
 	//NOTE: this version of newdata callback is meant for recording data for SimulatorCamera, not actual object scanning
@@ -113,11 +116,8 @@ public:
 	}
 
 	void modelData_cb_ ( typename askinect::ModelData<PointT> model) {
-		std::cout << "got new data!" << std::endl;
 		if (!model.segments.empty()) {
-			std::cout << "data got segments!" << std::endl;
 			if(gui.wantsData()) {
-				std::cout << "gui wants some data!" << std::endl;
 				gui.addNewModel(model);
 			}
 			else
@@ -154,7 +154,7 @@ public:
 int main(int argc, char* argv[])
 {
 	std::cout << "argc = " << argc << ", argv = " << *argv << endl;
-	std::string outputFolder = "/home/tommi/Desktop/AS-projekti/ObjectModels/";
+	std::string outputFolder = "../../models/";
 	if(argc > 1)
 		outputFolder = argv[1];
 

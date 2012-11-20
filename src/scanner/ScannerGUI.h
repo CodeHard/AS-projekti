@@ -126,7 +126,7 @@ public:
 	}
 
 
-	pcl::PointCloud<pcl::PointXYZRGB>& getCurrentCloud() {
+	pcl::PointCloud<pcl::PointXYZRGB> getCurrentCloud() {
 		return coloredSegments.at(currentSegmentIdx);
 	}
 

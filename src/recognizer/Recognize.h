@@ -21,6 +21,7 @@ SOFTWARE.
 */
 
 #pragma once
+#include <math.h>
 #include <pcl/point_cloud.h>
 #include "RecognizeResults.h"
 #include <boost/ptr_container/ptr_vector.hpp>
@@ -74,21 +75,21 @@ computeCloudResolution (const pcl::PointCloud<PointType>::ConstPtr &cloud)
 
   for (size_t i = 0; i < cloud->size (); ++i)
   {
-    if (! pcl_isfinite ((*cloud)[i].x))
-    {
-      continue;
-    }
-    //Considering the second neighbor since the first is the point itself.
-    nres = tree.nearestKSearch (i, 2, indices, sqr_distances);
-    if (nres == 2)
-    {
-      res += sqrt (sqr_distances[1]);
-      ++n_points;
-    }
+	if (! pcl_isfinite ((*cloud)[i].x))
+	{
+	  continue;
+	}
+	//Considering the second neighbor since the first is the point itself.
+	nres = tree.nearestKSearch (i, 2, indices, sqr_distances);
+	if (nres == 2)
+	{
+	  res += sqrt (sqr_distances[1]);
+	  ++n_points;
+	}
   }
   if (n_points != 0)
   {
-    res /= n_points;
+	res /= n_points;
   }
   return res;
 }
@@ -101,11 +102,10 @@ template<typename T, typename T2>
 void recognize(boost::ptr_vector< pcl::PointCloud<T> >& models,
 		pcl::PointCloud<T2> segment) {
 	std::map<int, std::string> items;
-	items.insert(std::pair<int, std::string>(0, "akku"));
-	items.insert(std::pair<int, std::string>(1, "housut"));
-	items.insert(std::pair<int, std::string>(2, "koff"));
-	items.insert(std::pair<int, std::string>(3, "lakerol"));
-	items.insert(std::pair<int, std::string>(4, "urquell"));
+	items.insert(std::pair<int, std::string>(0, "angrybirds"));
+	items.insert(std::pair<int, std::string>(1, "kuppi"));
+	items.insert(std::pair<int, std::string>(2, "nalle"));
+	items.insert(std::pair<int, std::string>(3, "powerking"));
 
 	/*
 	items[1] = "housut";
@@ -114,11 +114,11 @@ void recognize(boost::ptr_vector< pcl::PointCloud<T> >& models,
 	items[4] = "urquell";
 	*/
 	size_t bestFitIdx = 0;
-	size_t bestFit = 0;
+	float bestFit = 0;
 	//std::map<std::string, CloudModel<T> >::iterator it = models.begin();
 	for (int model_idx = 0; model_idx < models.size(); model_idx++) {
 		//std::cout << "best fit this far: " << bestFit << ". \n";
-		//std::cout << "handling item " << model_idx << ", " << items[model_idx] << std::endl;
+		std::cout << "handling item " << model_idx << ", " << items[model_idx] << std::endl;
 
 		pcl::PointCloud<PointType>::Ptr model(new pcl::PointCloud<PointType>());
 		pcl::PointCloud<PointType>::Ptr model_keypoints(
@@ -242,9 +242,10 @@ void recognize(boost::ptr_vector< pcl::PointCloud<T> >& models,
 		///  DEFINE BEST FIT
 		///  (finds biggest correspondance/model_keypoints -ratio
 		///
-		std::cout << "Fit on this iteration: " << model_scene_corrs->size()*(1.0/model_keypoints->size()) << std::endl;
-		if(bestFit < model_scene_corrs->size()*(1.0/model_keypoints->size())) {
-			bestFit = model_scene_corrs->size()*(1.0/model_keypoints->size());
+		float thisFit = (float)model_scene_corrs->size()*(1.0/(float)sqrt((float)(1 + abs((int)model_keypoints->size() - (int)scene_keypoints->size()))));
+		std::cout << "Fit on this iteration: " << thisFit << std::endl;
+		if(bestFit < thisFit) {
+			bestFit = thisFit;
 			bestFitIdx = model_idx;
 		}
 
@@ -346,8 +347,8 @@ void recognize(boost::ptr_vector< pcl::PointCloud<T> >& models,
 template<typename T>
 RecognizeResults recognize(const CloudDB<T> &models, const pcl::PointCloud<T> &test_cloud)
 {
-    RecognizeResults results;
-    return results;
+	RecognizeResults results;
+	return results;
 }
 
 
