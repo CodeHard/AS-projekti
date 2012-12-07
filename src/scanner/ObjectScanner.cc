@@ -93,7 +93,7 @@ public:
 		std::cout << "got cloud with points: " << currentCloud.size() << std::endl;
 		pcl::PointCloud<FilePointType> saveable;
 		pcl::copyPointCloud(currentCloud, saveable);
-		std::cout << "saving cloud with points: " << saveablesize() << std::endl;
+		std::cout << "saving cloud with points: " << saveable.size() << std::endl;
 		fileHandler.writePointCloudToFile(objectName, saveable);
 		std::cout << "saved cloud" << std::endl;
 	}
