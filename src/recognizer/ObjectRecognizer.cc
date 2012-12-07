@@ -33,9 +33,6 @@ SOFTWARE.
 #include "../DataTypes.h"
 #include "../DatabaseReader.h"
 
-//#include <pcl/recognition/impl/voxel_structure.hpp>
-//#include <pcl/recognition/impl/obj_rec_ransac.hpp>
-
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudType;
 typedef pcl::PointXYZRGBA PointType;
 typedef askinect::OpenNICamera CameraType;
@@ -59,7 +56,6 @@ private:
 	unsigned int frameCounter;
 public:
 	ObjectRecognizer(std::string inputFolder) :
-		//fileHandler(outputFolder),
 		dbReader(inputFolder),
 		gui(),
 		modelRecorder(),
@@ -97,22 +93,18 @@ public:
 
 	void recognize_cb_(std::string turha) {
 		std::cout << "Loading files\n";
-		//boost::ptr_vector <pcl::PointCloud<FilePointType> >& refModels = dbReader.getModels();
+
 		auto refModels = dbReader.getModels();
 
 		// recognize from scene
 		//recognize(refModels, scene);
 
-		// recognize from pre-selected segment
+		// recognize from a pre-selected segment
 		recognize(refModels, gui.getCurrentCloud());
-
-
-
-
-		//fileHandler.writePointCloudToFile(objectName, gui.getCurrentCloud());
 	}
 
 	//NOTE: this version of newdata callback is meant for recording data for SimulatorCamera, not actual object scanning
+/*
 	void record_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
 		// show single cloud
 		//gui.drawRawData(cloud);
@@ -124,12 +116,14 @@ public:
 		std::cout << file_name.str() << std::endl;
 		//fileHandler.writePointCloudToFile(file_name.str(), cloud);
 	}
+*/
 
+	// called when new scene cloud is available from the sensor
 	void newBackground_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
 		pcl::copyPointCloud(*cloud, scene);
-		//gui.updateBackgroundData(cloud);
 	}
 
+	// called when new models are segmented from the scene
 	void modelData_cb_ ( typename askinect::ModelData<PointT> model) {
 		if (!model.segments.empty()) {
 			if(gui.wantsData()) {
@@ -142,14 +136,10 @@ public:
 		}
 	}
 
-	/* \brief This function is possibly not needed
-	 *
-	 */
 	void run()
 	{
 		while (gui.running())
 		{
-			// main loop is empty, as cloud data is routed directly to RecognizerGUI::update(), by boost signals
 			boost::this_thread::sleep(boost::posix_time::milliseconds (5));
 
 			gui.update();

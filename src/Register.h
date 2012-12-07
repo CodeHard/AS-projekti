@@ -42,6 +42,8 @@ SOFTWARE.
 #include <pcl/ros/conversions.h>
 #include <pcl/registration/correspondence_rejection_sample_consensus.h>
 
+#include "FileHandler.h"
+
 using namespace pcl;
 using namespace pcl::io;
 using namespace pcl::console;
@@ -61,8 +63,8 @@ private:
 
 	////////////////////////////////////////////////////////////////////////////////
 	void
-	estimateKeypoints (typename const PointCloud<T>::Ptr &src,
-					   typename const PointCloud<T>::Ptr &tgt,
+	estimateKeypoints (const typename PointCloud<T>::Ptr &src,
+					   const typename PointCloud<T>::Ptr &tgt,
 					   const PointCloud<Normal>::Ptr &srcNormals,
 					   const PointCloud<Normal>::Ptr &tgtNormals,
 					   PointCloud<T> &keypoints_src,
@@ -87,8 +89,8 @@ private:
 
 	////////////////////////////////////////////////////////////////////////////////
 	void
-	estimateNormals (typename const PointCloud<T>::Ptr &src,
-					 typename const PointCloud<T>::Ptr &tgt,
+	estimateNormals (const typename PointCloud<T>::Ptr &src,
+					 const typename PointCloud<T>::Ptr &tgt,
 					 PointCloud<Normal> &normals_src,
 					 PointCloud<Normal> &normals_tgt)
 	{
@@ -103,12 +105,12 @@ private:
 
 	////////////////////////////////////////////////////////////////////////////////
 	void
-	estimateFPFH (typename const PointCloud<T>::Ptr &src,
-				  typename const PointCloud<T>::Ptr &tgt,
-				  typename const PointCloud<Normal>::Ptr &normals_src,
-				  typename const PointCloud<Normal>::Ptr &normals_tgt,
-				  typename const PointCloud<T>::Ptr &keypoints_src,
-				  typename const PointCloud<T>::Ptr &keypoints_tgt,
+	estimateFPFH (const typename PointCloud<T>::Ptr &src,
+				  const typename PointCloud<T>::Ptr &tgt,
+				  const typename PointCloud<Normal>::Ptr &normals_src,
+				  const typename PointCloud<Normal>::Ptr &normals_tgt,
+				  const typename PointCloud<T>::Ptr &keypoints_src,
+				  const typename PointCloud<T>::Ptr &keypoints_tgt,
 				  PointCloud<FPFHSignature33> &fpfhs_src,
 				  PointCloud<FPFHSignature33> &fpfhs_tgt)
 	{
@@ -140,8 +142,8 @@ private:
 	////////////////////////////////////////////////////////////////////////////////
 	void
 	rejectBadCorrespondences (const CorrespondencesPtr &all_correspondences,
-							  typename const PointCloud<T>::Ptr &keypoints_src,
-							  typename const PointCloud<T>::Ptr &keypoints_tgt,
+							  const typename PointCloud<T>::Ptr &keypoints_src,
+							  const typename PointCloud<T>::Ptr &keypoints_tgt,
 							  Correspondences &remaining_correspondences)
 	{
 		CorrespondenceRejectorSampleConsensus<T> rej;
@@ -154,8 +156,8 @@ private:
 
 	////////////////////////////////////////////////////////////////////////////////
 	void
-	computeTransformation (typename const PointCloud<T>::Ptr &src,
-						   typename const PointCloud<T>::Ptr &tgt,
+	computeTransformation (const typename PointCloud<T>::Ptr &src,
+						   const typename PointCloud<T>::Ptr &tgt,
 						   Eigen::Matrix4f &transform,
 						   int &numberOfCorrespondences)
 	{
@@ -172,9 +174,9 @@ private:
 		estimateKeypoints (src, tgt, normals_src, normals_tgt, *keypoints_src, *keypoints_tgt);
 		print_info ("Found %d and %d keypoints for the source and target datasets.\n", keypoints_src->points.size (), keypoints_tgt->points.size ());
 
-		askinect::FileHandler files("../../test/data/testregister/");
-		files.writePointCloudToFile("keypoints1.pcd", *keypoints_src);
-		files.writePointCloudToFile("keypoints2.pcd", *keypoints_tgt);
+		askinect::FileHandler<T> files("../../test/data/testregister/");
+		//files.writePointCloudToFile("keypoints1.pcd", *keypoints_src);
+		//files.writePointCloudToFile("keypoints2.pcd", *keypoints_tgt);
 
 		// Compute FPFH features at each keypoint
 		PointCloud<FPFHSignature33>::Ptr fpfhs_src (new PointCloud<FPFHSignature33>),

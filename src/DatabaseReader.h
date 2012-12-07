@@ -43,6 +43,9 @@ typedef pcl::PointXYZRGB LoadPointT;
 namespace askinect
 {
 
+/* DBReader Reads point clouds from a directory to a database.
+ *
+ */
 template<typename PointT>
 class DatabaseReader
 {

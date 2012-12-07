@@ -44,7 +44,6 @@ private:
     pcl::Grabber *interface;
     pcl::PointCloud<PointT> data;
 
-    //pcl::PointCloud<PointT>::ConstPtr & data;
 public:
 
     boost::signals2::signal<void (typename pcl::PointCloud<PointT>::ConstPtr const &)> dataSignal;
@@ -55,10 +54,6 @@ public:
         // make callback function that is called as a new frame is available
         boost::function<void (const typename pcl::PointCloud<PointT>::ConstPtr &)> f = boost::bind (&CameraWrapper::capture_cb_, this, _1);
         interface->registerCallback(f);
-    }
-    ~CameraWrapper()
-    {
-
     }
 
     template<typename A>
@@ -75,19 +70,10 @@ public:
     {
         interface->stop();
     }
-/*
-    template<typename T>
-    boost::signals2::connection registerCallback(const boost::function<T> &callback)
-    {
-        return dataSignal.connect(callback);
-    }
-*/
 
     void capture_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr &cloud)
     {
     	dataSignal();
-    	//data = pcl::PointCloud<PointT>(cloud);
-        //dataSignal(boost::make_shared(data));
     }
 
 };

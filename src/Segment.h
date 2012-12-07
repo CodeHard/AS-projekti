@@ -63,12 +63,12 @@ public:
 		// Optional
 		seg.setOptimizeCoefficients (true);
 		// Mandatory
-		//seg.setModelType (pcl::SACMODEL_PERPENDICULAR_PLANE);
 		seg.setModelType (pcl::SACMODEL_PLANE);
 		seg.setMethodType (pcl::SAC_RANSAC);
 		seg.setDistanceThreshold (0.03);
 
-		//assume 45 +- 40deg imaging angle - this is to limit the found planes to horizontal surfaces, for example walls would not count
+		//assume 45 +- 40deg imaging tilt angle - this is to limit the found planes to horizontal surfaces, for example walls would not count
+		//seg.setModelType (pcl::SACMODEL_PERPENDICULAR_PLANE);
 		//seg.setAxis(Eigen::Vector3f(0, -1, -1));
 		//seg.setEpsAngle(pcl::deg2rad(40.0f));
 	}

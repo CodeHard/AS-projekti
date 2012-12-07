@@ -28,7 +28,7 @@ SOFTWARE.
 
 int main ()
 {
-    askinect::FileHandler files("../../test/data/testregister/");
+    askinect::FileHandler<pcl::PointXYZRGB> files("../../test/data/testregister/");
 
 	std::cout << "Loading point clouds from two files..." << std::endl;
 
@@ -41,7 +41,7 @@ int main ()
     askinect::Register<pcl::PointXYZRGB> reg;
     auto cloud3 = reg.registerNew(cloud);
 
-	files.writePointCloudToFile("pre-result.pcd", cloud3);
+	//files.writePointCloudToFile("pre-result.pcd", cloud3);
 	
 	std::cout << "First cloud registered. Registering the second cloud..." << std::endl;
 
@@ -49,7 +49,7 @@ int main ()
 
 	std::cout << "All clouds registered. Saving resulting cloud..." << std::endl;
 
-    files.writePointCloudToFile("result.pcd", cloud4);
+    //files.writePointCloudToFile("result.pcd", cloud4);
 
     return 0;
 }

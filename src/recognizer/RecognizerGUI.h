@@ -29,7 +29,6 @@ SOFTWARE.
 #include <boost/signals2/signal.hpp>
 
 class boost::signals2::connection;
-//class ObjectRecognizer;
 
 namespace askinect
 {
@@ -75,10 +74,6 @@ public:
 		gotNewModel = true;
 	}
 
-	~RecognizerGUI()
-	{
-	}
-
 	template<typename T>
 	boost::signals2::connection registerSaveObjectCallback(
 			const boost::function<T> &callback) {
@@ -98,8 +93,6 @@ public:
 		{
 			std::cout << "Refreshing clouds." << std::endl;
 
-			//viewer->removeAllPointClouds();
-			//coloredSegments.clear();
 			currentSegmentIdx = -1;
 			newDataWanted = true;
 		}
@@ -132,9 +125,7 @@ public:
 	{
 		return !viewer->wasStopped();
 	}
-	/*  \brief Visualizes point cloud and possibly handles keyboard input (?)
-	 *  TODO: update to template
-	 */
+
 	void update()
 	{
 		viewer->spinOnce();
@@ -176,19 +167,6 @@ public:
 
 	void addOrUpdateBackground(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, std::string id)
 	{
-		/*
-		// purkkaa, rgb colors not showing at all
-		if(colorHandlers.size() == 0) {
-			colorHandlers.push_back(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB>(cloud));
-		}
-		else {
-			colorHandlers.clear();
-			colorHandlers.push_back(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB>(cloud));
-		}
-		if( !viewer->updatePointCloud(cloud, colorHandlers.at(0), id)) {
-			viewer->addPointCloud<pcl::PointXYZRGB>(cloud, colorHandlers.at(0), id);
-		}
-		*/
 		if ( !viewer->updatePointCloud<pcl::PointXYZRGB>(cloud, id))
 		{
 			viewer->addPointCloud<pcl::PointXYZRGB>(cloud,  id);
