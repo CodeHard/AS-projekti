@@ -88,7 +88,7 @@ public:
 
 	void saveObject_cb_(std::string objectName) {
 		std::cout << "OS: Saving object\n";
-		//convert to XYZRGB
+
 		auto currentCloud = gui.getCurrentCloud();
 		std::cout << "got cloud with points: " << currentCloud.size() << std::endl;
 		pcl::PointCloud<FilePointType> saveable;
@@ -97,7 +97,7 @@ public:
 		fileHandler.writePointCloudToFile(objectName, saveable);
 		std::cout << "saved cloud" << std::endl;
 	}
-
+/*
 	//NOTE: this version of newdata callback is meant for recording data for SimulatorCamera, not actual object scanning
 	void record_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
 		// show single cloud
@@ -110,7 +110,7 @@ public:
 		std::cout << file_name.str() << std::endl;
 		fileHandler.writePointCloudToFile(file_name.str(), cloud);
 	}
-
+*/
 	void newBackground_cb_ (const typename pcl::PointCloud<PointT>::ConstPtr & cloud) {
 		gui.updateBackgroundData(cloud);
 	}
@@ -127,14 +127,10 @@ public:
 		}
 	}
 
-	/* \brief This function is possibly not needed
-	 *
-	 */
 	void run()
 	{
 		while (gui.running())
 		{
-			// main loop is empty, as cloud data is routed directly to ScannerGUI::update(), by boost signals
 			boost::this_thread::sleep(boost::posix_time::milliseconds (5));
 
 			gui.update();

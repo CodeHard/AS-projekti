@@ -27,6 +27,7 @@ SOFTWARE.
 namespace askinect
 {
 
+// CLASS NOT IN USE CURRENTLY!
 class RecognizeResults
 {
 private:

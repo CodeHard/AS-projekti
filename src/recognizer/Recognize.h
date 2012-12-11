@@ -102,17 +102,19 @@ template<typename T, typename T2>
 void recognize(boost::ptr_vector< pcl::PointCloud<T> >& models,
 		pcl::PointCloud<T2> segment) {
 	std::map<int, std::string> items;
+
+	// TODO: Of course the names are not supposed to be hard-coded here.
+	//       Define them based on the file names and couple with models.
+	//       Structures CloudModel and CloudDB should help with this.
+	//       1. Read files with DatabaseReader
+	//       2. Construct a CloudModel from each file, with id = filename
+	//       3. Add all models to CloudDB
+	//       4. Pass the CloudDB to this function
 	items.insert(std::pair<int, std::string>(0, "angrybirds"));
 	items.insert(std::pair<int, std::string>(1, "kuppi"));
 	items.insert(std::pair<int, std::string>(2, "nalle"));
 	items.insert(std::pair<int, std::string>(3, "powerking"));
 
-	/*
-	items[1] = "housut";
-	items[2] = "koff";
-	items[3] = "lakerol";
-	items[4] = "urquell";
-	*/
 	size_t bestFitIdx = 0;
 	float bestFit = 0;
 	//std::map<std::string, CloudModel<T> >::iterator it = models.begin();
@@ -241,7 +243,8 @@ void recognize(boost::ptr_vector< pcl::PointCloud<T> >& models,
 		///
 		///  DEFINE BEST FIT
 		///  (finds biggest correspondance/model_keypoints -ratio
-		///
+		///  NOTE: This is just an experimental and fast way to recognize objects.
+		///  TODO: recognize based on the code below (model instances)
 		float thisFit = (float)model_scene_corrs->size()*(1.0/(float)sqrt((float)(1 + abs((int)model_keypoints->size() - (int)scene_keypoints->size()))));
 		std::cout << "Fit on this iteration: " << thisFit << std::endl;
 		if(bestFit < thisFit) {

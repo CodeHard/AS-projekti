@@ -60,7 +60,7 @@ public:
 
     void start()
     {
-        FileHandler fileHandler(directory);
+        FileHandler<PointT> fileHandler(directory);
         boost::regex filter(".*\\.pcd");
         auto files = getFiles(directory, filter);
 

@@ -24,6 +24,8 @@ SOFTWARE.
 #include <pcl/point_cloud.h>
 #include <pcl/filters/filter.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/filters/voxel_grid.h>
+
 
 namespace askinect
 {
@@ -42,7 +44,7 @@ public:
 	{
 		*model += new_cloud;
 
-		// down sample
+		// downsample
 		pcl::VoxelGrid<T> sor;
 		pcl::PointCloud<T> result;
 		sor.setInputCloud (model);
