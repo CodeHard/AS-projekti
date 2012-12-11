@@ -30,6 +30,9 @@ SOFTWARE.
 namespace askinect
 {
 
+/*
+Add new point clouds to a world model and keep the model down sampled.
+*/
 template<typename T>
 class Filter
 {
@@ -40,6 +43,9 @@ public:
 	Filter() : model(new pcl::PointCloud<T>) {}
 	~Filter() {}
 
+/*
+Add new point cloud to the model. Returns result model.
+*/
 	const pcl::PointCloud<T> updateModel(const pcl::PointCloud<T> &new_cloud)
 	{
 		*model += new_cloud;

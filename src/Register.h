@@ -53,6 +53,14 @@ using namespace pcl::common;
 namespace askinect
 {
 
+/*
+Register multiple point clouds to fixed coordinate system.
+
+New cloud is registered with registerNew()-function. Function
+returns the input cloud transformed to the common coordinate
+system. If the input cloud could not be registered, an empty
+cloud is returned.
+*/
 template<typename T>
 class Register
 {
@@ -61,7 +69,7 @@ private:
 	Eigen::Matrix4f cumulativeTransform;
 	bool isInitialized;
 
-	////////////////////////////////////////////////////////////////////////////////
+
 	void
 	estimateKeypoints (const typename PointCloud<T>::Ptr &src,
 					   const typename PointCloud<T>::Ptr &tgt,
@@ -87,7 +95,6 @@ private:
 		copyPointCloud(keypoints_tgt_scale, keypoints_tgt);
 	}
 
-	////////////////////////////////////////////////////////////////////////////////
 	void
 	estimateNormals (const typename PointCloud<T>::Ptr &src,
 					 const typename PointCloud<T>::Ptr &tgt,
@@ -103,7 +110,6 @@ private:
 		normal_est.compute (normals_tgt);
 	}
 
-	////////////////////////////////////////////////////////////////////////////////
 	void
 	estimateFPFH (const typename PointCloud<T>::Ptr &src,
 				  const typename PointCloud<T>::Ptr &tgt,
@@ -127,7 +133,6 @@ private:
 		fpfh_est.compute (fpfhs_tgt);
 	}
 
-	////////////////////////////////////////////////////////////////////////////////
 	void
 	findCorrespondences (const PointCloud<FPFHSignature33>::Ptr &fpfhs_src,
 						 const PointCloud<FPFHSignature33>::Ptr &fpfhs_tgt,
@@ -139,7 +144,6 @@ private:
 		est.determineReciprocalCorrespondences (all_correspondences);
 	}
 
-	////////////////////////////////////////////////////////////////////////////////
 	void
 	rejectBadCorrespondences (const CorrespondencesPtr &all_correspondences,
 							  const typename PointCloud<T>::Ptr &keypoints_src,
@@ -153,42 +157,29 @@ private:
 		rej.getCorrespondences (remaining_correspondences);
 	}
 
-
-	////////////////////////////////////////////////////////////////////////////////
 	void
 	computeTransformation (const typename PointCloud<T>::Ptr &src,
 						   const typename PointCloud<T>::Ptr &tgt,
 						   Eigen::Matrix4f &transform,
 						   int &numberOfCorrespondences)
 	{
-		// Compute normals for all points keypoint
+		// Compute normals for all points
 		PointCloud<Normal>::Ptr normals_src (new PointCloud<Normal>),
 				   normals_tgt (new PointCloud<Normal>);
 		estimateNormals (src, tgt, *normals_src, *normals_tgt);
 		print_info ("Estimated %d and %d normals for the source and target datasets.\n", normals_src->points.size (), normals_tgt->points.size ());
 
-		// Get an uniform grid of keypoints
+		// Get SIFT keypoints
 		typename PointCloud<T>::Ptr keypoints_src (new PointCloud<T>),
 				 keypoints_tgt (new PointCloud<T>);
 
 		estimateKeypoints (src, tgt, normals_src, normals_tgt, *keypoints_src, *keypoints_tgt);
 		print_info ("Found %d and %d keypoints for the source and target datasets.\n", keypoints_src->points.size (), keypoints_tgt->points.size ());
 
-		askinect::FileHandler<T> files("../../test/data/testregister/");
-		//files.writePointCloudToFile("keypoints1.pcd", *keypoints_src);
-		//files.writePointCloudToFile("keypoints2.pcd", *keypoints_tgt);
-
 		// Compute FPFH features at each keypoint
 		PointCloud<FPFHSignature33>::Ptr fpfhs_src (new PointCloud<FPFHSignature33>),
 				   fpfhs_tgt (new PointCloud<FPFHSignature33>);
 		estimateFPFH (src, tgt, normals_src, normals_tgt, keypoints_src, keypoints_tgt, *fpfhs_src, *fpfhs_tgt);
-
-		// Copy the data and save it to disk
-		/*  PointCloud<PointNormal> s, t;
-		  copyPointCloud<PointXYZ, PointNormal> (*keypoints_src, s);
-		  copyPointCloud<Normal, PointNormal> (normals_src, s);
-		  copyPointCloud<PointXYZ, PointNormal> (*keypoints_tgt, t);
-		  copyPointCloud<Normal, PointNormal> (normals_tgt, t);*/
 
 		// Find correspondences between keypoints in FPFH space
 		CorrespondencesPtr all_correspondences (new Correspondences),
@@ -255,22 +246,6 @@ public:
 			}
 
 			cumulativeTransform *= transform;
-
-			/*typename PointCloud<T>::Ptr newFiltered (new PointCloud<T>);
-			transformPointCloud(*filtered, *newFiltered, transform);
-
-			IterativeClosestPoint<T, T> icp;
-
-			icp.setInputSource(newFiltered);
-			icp.setInputTarget(previousCloudFiltered);
-
-			PointCloud<T> final;
-			icp.align(final);
-
-			std::cout << "icp has converged: " << icp.hasConverged() << std::endl;
-			std::cout << "final transformation: " << icp.getFinalTransformation() << std::endl;
-
-			cumulativeTransform *= icp.getFinalTransformation();*/
 
 			PointCloud<T> returnCloud;
 			transformPointCloud(newCloud, returnCloud, cumulativeTransform);

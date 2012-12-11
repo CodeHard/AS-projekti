@@ -29,6 +29,9 @@ SOFTWARE.
 namespace askinect
 {
 
+/*
+Class stub for a database with multiple point clouds with ids.
+*/
 template<typename T>
 class CloudDB
 {

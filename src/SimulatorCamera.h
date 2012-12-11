@@ -39,6 +39,14 @@ class boost::signals2::connection;
 namespace askinect
 {
 
+/*
+Camera that takes a directory with pcd-files and calls registered callback-functions for each pcd-file.
+
+refreshRate can be adjusted with variable "refreshRate"
+directory can be adjusted with variable "directory"
+callback functions can be registered with registerCallback
+camera can be started with start()-function
+*/
 template<typename PointT>
 class SimulatorCamera
 {

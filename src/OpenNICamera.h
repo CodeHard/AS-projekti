@@ -29,6 +29,9 @@ class boost::signals2::connection;
 namespace askinect
 {
 
+/*
+A basic wrapper for pcl::OpenNIGrabber.
+*/
 class OpenNICamera
 {
 private:

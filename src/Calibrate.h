@@ -26,6 +26,9 @@ SOFTWARE.
 namespace askinect
 {
 
+/*
+Calibrate point clouds. (Plain interface)
+*/
 template<typename T>
 pcl::PointCloud<T> calibrate(const pcl::PointCloud<T> &cloud)
 {

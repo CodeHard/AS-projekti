@@ -27,6 +27,9 @@ SOFTWARE.
 namespace askinect
 {
 
+/*
+Class stub for a point cloud with id.
+*/
 template<typename T>
 class CloudModel
 {

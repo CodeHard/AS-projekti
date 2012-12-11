@@ -30,6 +30,9 @@ SOFTWARE.
 namespace askinect
 {
 
+/*
+Load files that match a filter from a directory.
+*/
 std::vector<std::string> getFiles(std::string directory, boost::regex filter)
 {
     std::vector< std::string > allMatchingFiles;
